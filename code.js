@@ -17,6 +17,48 @@ function getVariantProperties(componentSet) {
   return Array.from(allProperties);
 }
 
+// Функция для создания ключа сортировки на основе всех свойств кроме группирующего
+function createSortingKey(variant, excludeProperty) {
+  if (!variant.variantProperties) return '';
+  
+  const sortingProperties = Object.keys(variant.variantProperties)
+    .filter(prop => prop !== excludeProperty)
+    .sort(); // Сортируем названия свойств для консистентности
+    
+  return sortingProperties
+    .map(prop => `${prop}:${variant.variantProperties[prop]}`)
+    .join('|');
+}
+
+// Функция для получения эталонного порядка сортировки
+function getReferenceSortingOrder(variants, groupByProperty) {
+  const sortingKeys = new Set();
+  
+  variants.forEach(variant => {
+    const key = createSortingKey(variant, groupByProperty);
+    if (key) sortingKeys.add(key);
+  });
+  
+  return Array.from(sortingKeys).sort();
+}
+
+// Функция для сортировки вариантов в группе по эталонному порядку
+function sortVariantsByReference(variants, groupByProperty, referenceSortingOrder) {
+  return variants.sort((a, b) => {
+    const keyA = createSortingKey(a, groupByProperty);
+    const keyB = createSortingKey(b, groupByProperty);
+    
+    const indexA = referenceSortingOrder.indexOf(keyA);
+    const indexB = referenceSortingOrder.indexOf(keyB);
+    
+    // Если ключ не найден в эталонном порядке, помещаем в конец
+    const finalIndexA = indexA === -1 ? referenceSortingOrder.length : indexA;
+    const finalIndexB = indexB === -1 ? referenceSortingOrder.length : indexB;
+    
+    return finalIndexA - finalIndexB;
+  });
+}
+
 // Функция для группировки вариантов по свойству
 function groupVariantsByProperty(variants, property) {
   const groups = {};
@@ -64,6 +106,14 @@ function alignComponentVariants(componentSet, padding = 40, spacing = 20, column
       const groupKeys = Object.keys(groups);
       
       if (groupKeys.length > 1) {
+        // Получаем эталонный порядок сортировки
+        const referenceSortingOrder = getReferenceSortingOrder(variants, groupByProperty);
+        
+        // Сортируем варианты в каждой группе по эталонному порядку
+        groupKeys.forEach(groupKey => {
+          groups[groupKey] = sortVariantsByReference(groups[groupKey], groupByProperty, referenceSortingOrder);
+        });
+        
         // Устанавливаем количество колонок равное количеству групп
         actualColumns = groupKeys.length;
         
@@ -73,7 +123,7 @@ function alignComponentVariants(componentSet, padding = 40, spacing = 20, column
           arrangedVariants = arrangedVariants.concat(groups[groupKey]);
         });
         
-        figma.notify(`Варианты сгруппированы по "${groupByProperty}": ${groupKeys.join(', ')}`);
+        figma.notify(`Варианты сгруппированы по "${groupByProperty}": ${groupKeys.join(', ')} с синхронной сортировкой`);
       } else {
         figma.notify(`Все варианты имеют одинаковое значение "${groupByProperty}"`);
       }
@@ -98,7 +148,15 @@ function alignComponentVariants(componentSet, padding = 40, spacing = 20, column
 // Функция для создания Grid layout с группировкой
 function setupGridLayoutByGroups(componentSet, variants, spacing, groupByProperty, padding) {
   const groups = groupVariantsByProperty(variants, groupByProperty);
-  const groupKeys = Object.keys(groups);
+  const groupKeys = Object.keys(groups).sort(); // Сортируем ключи групп для консистентности
+  
+  // Получаем эталонный порядок сортировки
+  const referenceSortingOrder = getReferenceSortingOrder(variants, groupByProperty);
+  
+  // Сортируем варианты в каждой группе
+  groupKeys.forEach(groupKey => {
+    groups[groupKey] = sortVariantsByReference(groups[groupKey], groupByProperty, referenceSortingOrder);
+  });
   
   // Находим максимальные размеры среди всех компонентов
   let maxWidth = 0;

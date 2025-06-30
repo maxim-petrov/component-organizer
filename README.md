@@ -9,6 +9,7 @@
 - **Настраиваемый отступ между вариантами**: от 0 до 200px (по умолчанию 20px)
 - **Количество колонок**: от 1 до 10 (по умолчанию 2)
 - **Группировка по свойствам**: автоматическая группировка вариантов по выбранному свойству
+- **Синхронная сортировка**: одинаковый порядок элементов во всех группах
 - **Выравнивание**: Grid layout с равномерным распределением в сетке или по группам
 
 ## Как использовать
@@ -28,6 +29,24 @@
 - **State**: все "Default" в первой колонке, "Hover" во второй, "Disabled" в третьей
 - **Type**: все "Primary" в первой колонке, "Secondary" во второй
 
+### Синхронная сортировка:
+При группировке по одному свойству, элементы в каждой колонке автоматически сортируются одинаково по остальным свойствам.
+
+**Пример:** Группировка по "Size", сортировка по "State" + "Filled":
+```
+Колонка 1 (Large):          Колонка 2 (Medium):         Колонка 3 (Small):
+• State=Default, Filled=True  • State=Default, Filled=True  • State=Default, Filled=True
+• State=Hover, Filled=True    • State=Hover, Filled=True    • State=Hover, Filled=True
+• State=ReadOnly, Filled=False • State=ReadOnly, Filled=False • State=ReadOnly, Filled=False
+```
+
+**Эталонный порядок создается автоматически:**
+1. `Filled:True|State:Default`
+2. `Filled:True|State:Hover`  
+3. `Filled:False|State:ReadOnly`
+
+Этот порядок применяется ко всем группам, обеспечивая консистентность.
+
 ## Возможности
 
 ### ✓ Редактируемые параметры
@@ -40,6 +59,12 @@
 - Группировка компонентов по выбранному свойству в отдельные колонки
 - Каждая колонка содержит варианты с одинаковым значением свойства
 - Автоматическое определение количества колонок по количеству уникальных значений
+
+### ✓ Синхронная сортировка
+- Единый порядок элементов во всех группах на основе остальных свойств
+- Автоматическое создание эталонного порядка сортировки
+- Консистентное позиционирование: одинаковые комбинации свойств в одинаковых позициях
+- Алфавитная сортировка ключей свойств для предсказуемого результата
 
 ### ✓ Grid Layout система
 - Автоматическое позиционирование компонентов в сетке
@@ -81,9 +106,9 @@
   - `y = padding + itemIndex * (maxHeight + spacing)` (строка = позиция в группе)
 - **Количество колонок**: автоматически определяется по количеству уникальных значений
 
-### Алгоритм группировки:
+### Алгоритм группировки с синхронной сортировкой:
 ```javascript
-// Группировка вариантов
+// 1. Группировка вариантов
 const groups = {};
 variants.forEach(variant => {
   const value = variant.variantProperties[property];
@@ -91,7 +116,31 @@ variants.forEach(variant => {
   groups[value].push(variant);
 });
 
-// Позиционирование по группам
+// 2. Создание эталонного порядка сортировки
+function createSortingKey(variant, excludeProperty) {
+  const sortingProperties = Object.keys(variant.variantProperties)
+    .filter(prop => prop !== excludeProperty)
+    .sort(); // Алфавитная сортировка свойств
+    
+  return sortingProperties
+    .map(prop => `${prop}:${variant.variantProperties[prop]}`)
+    .join('|'); // Например: "State:Default|Filled:True"
+}
+
+const referenceSortingOrder = Array.from(new Set(
+  variants.map(v => createSortingKey(v, groupByProperty))
+)).sort();
+
+// 3. Сортировка каждой группы по эталонному порядку
+Object.keys(groups).forEach(groupKey => {
+  groups[groupKey].sort((a, b) => {
+    const keyA = createSortingKey(a, groupByProperty);
+    const keyB = createSortingKey(b, groupByProperty);
+    return referenceSortingOrder.indexOf(keyA) - referenceSortingOrder.indexOf(keyB);
+  });
+});
+
+// 4. Позиционирование по группам
 Object.keys(groups).forEach((groupKey, groupIndex) => {
   groups[groupKey].forEach((variant, itemIndex) => {
     variant.x = padding + groupIndex * (maxWidth + spacing);
