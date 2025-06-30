@@ -49,7 +49,7 @@
       color: #333333;
     }
     
-    .setting-input {
+    .setting-input, .setting-select {
       padding: 8px 12px;
       border: 1px solid #e0e0e0;
       border-radius: 4px;
@@ -59,8 +59,42 @@
       transition: border-color 0.2s;
     }
     
-    .setting-input:focus {
+    .setting-input:focus, .setting-select:focus {
       border-color: #0d99ff;
+    }
+    
+    .setting-select {
+      cursor: pointer;
+    }
+    
+    .grouping-section {
+      background: #f9f9f9;
+      border-radius: 6px;
+      padding: 12px;
+      border: 1px solid #e0e0e0;
+    }
+    
+    .section-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333333;
+      margin-bottom: 8px;
+    }
+    
+    .refresh-btn {
+      padding: 4px 8px;
+      background: #f0f0f0;
+      border: 1px solid #d0d0d0;
+      border-radius: 4px;
+      font-size: 11px;
+      cursor: pointer;
+      color: #666666;
+      margin-left: 8px;
+      transition: background-color 0.2s;
+    }
+    
+    .refresh-btn:hover {
+      background: #e0e0e0;
     }
     
     .features {
@@ -170,10 +204,24 @@
       </div>
     </div>
     
+    <div class="grouping-section">
+      <div class="section-title">
+        Группировка по свойствам
+        <button class="refresh-btn" id="refresh-properties-btn">Обновить</button>
+      </div>
+      
+      <div class="setting-group">
+        <label class="setting-label" for="group-property-select">Свойство для группировки:</label>
+        <select id="group-property-select" class="setting-select">
+          <option value="none">Без группировки (сетка)</option>
+        </select>
+      </div>
+    </div>
+    
     <div class="features">
       <div class="feature">Grid layout с настраиваемыми колонками</div>
+      <div class="feature">Группировка по свойствам компонента</div>
       <div class="feature">Автоматическое позиционирование компонентов</div>
-      <div class="feature">Равномерное распределение в сетке</div>
       <div class="feature">Оптимальный размер Component Set</div>
     </div>
     
@@ -184,23 +232,65 @@
   </div>
 
   <script>
+    let availableProperties = [];
+    
+    // Функция для получения свойств компонента
+    function loadProperties() {
+      parent.postMessage({ pluginMessage: { type: 'get-properties' } }, '*');
+    }
+    
+    // Функция для обновления списка свойств
+    function updatePropertiesSelect(properties) {
+      const select = document.getElementById('group-property-select');
+      
+      // Очищаем список кроме первой опции
+      while (select.children.length > 1) {
+        select.removeChild(select.lastChild);
+      }
+      
+      // Добавляем новые опции
+      properties.forEach(property => {
+        const option = document.createElement('option');
+        option.value = property;
+        option.textContent = `${property} (группировка по колонкам)`;
+        select.appendChild(option);
+      });
+      
+      availableProperties = properties;
+    }
+    
+    // Обработчики событий
     document.getElementById('align-btn').addEventListener('click', () => {
       const padding = parseInt(document.getElementById('padding-input').value) || 40;
       const spacing = parseInt(document.getElementById('spacing-input').value) || 20;
       const columns = parseInt(document.getElementById('columns-input').value) || 2;
+      const groupByProperty = document.getElementById('group-property-select').value;
       
       parent.postMessage({ 
         pluginMessage: { 
           type: 'align-variants',
           padding: padding,
           spacing: spacing,
-          columns: columns
+          columns: columns,
+          groupByProperty: groupByProperty === 'none' ? null : groupByProperty
         } 
       }, '*');
     });
     
     document.getElementById('cancel-btn').addEventListener('click', () => {
       parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*');
+    });
+    
+    document.getElementById('refresh-properties-btn').addEventListener('click', () => {
+      loadProperties();
+    });
+    
+    // Обработчик сообщений от плагина
+    window.addEventListener('message', (event) => {
+      const msg = event.data.pluginMessage;
+      if (msg && msg.type === 'properties') {
+        updatePropertiesSelect(msg.data);
+      }
     });
     
     // Валидация ввода
@@ -218,6 +308,9 @@
         }
       });
     });
+    
+    // Загружаем свойства при инициализации
+    loadProperties();
   </script>
 </body>
 </html> 
