@@ -31,6 +31,34 @@
       line-height: 1.4;
     }
     
+    .selection-info {
+      background: #f0f7ff;
+      border: 1px solid #b3d9ff;
+      border-radius: 6px;
+      padding: 12px;
+      font-size: 12px;
+    }
+    
+    .selection-info.no-selection {
+      background: #fff7f0;
+      border-color: #ffcc99;
+    }
+    
+    .selection-info.no-selection .info-title {
+      color: #cc6600;
+    }
+    
+    .info-title {
+      font-weight: 600;
+      color: #0066cc;
+      margin-bottom: 4px;
+    }
+    
+    .info-details {
+      color: #666666;
+      font-size: 11px;
+    }
+    
     .settings {
       display: flex;
       flex-direction: column;
@@ -67,11 +95,21 @@
       cursor: pointer;
     }
     
+    .setting-select:disabled {
+      background: #f5f5f5;
+      color: #999999;
+      cursor: not-allowed;
+    }
+    
     .grouping-section {
       background: #f9f9f9;
       border-radius: 6px;
       padding: 12px;
       border: 1px solid #e0e0e0;
+    }
+    
+    .grouping-section.disabled {
+      opacity: 0.6;
     }
     
     .section-title {
@@ -95,6 +133,12 @@
     
     .refresh-btn:hover {
       background: #e0e0e0;
+    }
+    
+    .refresh-btn:disabled {
+      background: #f8f8f8;
+      color: #cccccc;
+      cursor: not-allowed;
     }
     
     .features {
@@ -144,6 +188,11 @@
       background: #0b7ce6;
     }
     
+    .button-primary:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+    
     .button-secondary {
       background: #f0f0f0;
       color: #333333;
@@ -162,6 +211,11 @@
       Выберите набор компонентов (Component Set) или отдельный компонент внутри набора, 
       настройте параметры и нажмите "Выровнять".
     </p>
+    
+    <div class="selection-info" id="selection-info">
+      <div class="info-title" id="info-title">Выберите компонент</div>
+      <div class="info-details" id="info-details">Выделите Component Set или компонент внутри набора</div>
+    </div>
     
     <div class="settings">
       <div class="setting-group">
@@ -204,15 +258,15 @@
       </div>
     </div>
     
-    <div class="grouping-section">
+    <div class="grouping-section" id="grouping-section">
       <div class="section-title">
         Группировка по свойствам
-        <button class="refresh-btn" id="refresh-properties-btn">Обновить</button>
+        <button class="refresh-btn" id="refresh-properties-btn" disabled>Обновить</button>
       </div>
       
       <div class="setting-group">
         <label class="setting-label" for="group-property-select">Свойство для группировки:</label>
-        <select id="group-property-select" class="setting-select">
+        <select id="group-property-select" class="setting-select" disabled>
           <option value="none">Без группировки (сетка)</option>
         </select>
       </div>
@@ -226,17 +280,50 @@
     </div>
     
     <div class="buttons">
-      <button class="button button-primary" id="align-btn">Выровнять</button>
+      <button class="button button-primary" id="align-btn" disabled>Выровнять</button>
       <button class="button button-secondary" id="cancel-btn">Отмена</button>
     </div>
   </div>
 
   <script>
     let availableProperties = [];
+    let hasValidSelection = false;
     
-    // Функция для получения свойств компонента
-    function loadProperties() {
-      parent.postMessage({ pluginMessage: { type: 'get-properties' } }, '*');
+    // Функция для обновления информации о выделении
+    function updateSelectionInfo(data) {
+      const infoContainer = document.getElementById('selection-info');
+      const infoTitle = document.getElementById('info-title');
+      const infoDetails = document.getElementById('info-details');
+      const groupingSection = document.getElementById('grouping-section');
+      const alignBtn = document.getElementById('align-btn');
+      const refreshBtn = document.getElementById('refresh-properties-btn');
+      const propertySelect = document.getElementById('group-property-select');
+      
+      hasValidSelection = data.hasValidSelection;
+      
+      if (data.hasValidSelection) {
+        infoContainer.className = 'selection-info';
+        infoTitle.textContent = `📦 ${data.componentSetName}`;
+        infoDetails.textContent = `${data.variantCount} вариантов • ${data.properties.length} свойств`;
+        
+        groupingSection.classList.remove('disabled');
+        alignBtn.disabled = false;
+        refreshBtn.disabled = false;
+        propertySelect.disabled = false;
+        
+        updatePropertiesSelect(data.properties);
+      } else {
+        infoContainer.className = 'selection-info no-selection';
+        infoTitle.textContent = 'Выберите компонент';
+        infoDetails.textContent = 'Выделите Component Set или компонент внутри набора';
+        
+        groupingSection.classList.add('disabled');
+        alignBtn.disabled = true;
+        refreshBtn.disabled = true;
+        propertySelect.disabled = true;
+        
+        updatePropertiesSelect([]);
+      }
     }
     
     // Функция для обновления списка свойств
@@ -261,6 +348,10 @@
     
     // Обработчики событий
     document.getElementById('align-btn').addEventListener('click', () => {
+      if (!hasValidSelection) {
+        return;
+      }
+      
       const padding = parseInt(document.getElementById('padding-input').value) || 40;
       const spacing = parseInt(document.getElementById('spacing-input').value) || 20;
       const columns = parseInt(document.getElementById('columns-input').value) || 2;
@@ -282,12 +373,16 @@
     });
     
     document.getElementById('refresh-properties-btn').addEventListener('click', () => {
-      loadProperties();
+      parent.postMessage({ pluginMessage: { type: 'get-properties' } }, '*');
     });
     
     // Обработчик сообщений от плагина
     window.addEventListener('message', (event) => {
       const msg = event.data.pluginMessage;
+      if (msg && msg.type === 'selection-updated') {
+        updateSelectionInfo(msg.data);
+      }
+      // Поддержка старого формата для совместимости
       if (msg && msg.type === 'properties') {
         updatePropertiesSelect(msg.data);
       }
@@ -308,9 +403,6 @@
         }
       });
     });
-    
-    // Загружаем свойства при инициализации
-    loadProperties();
   </script>
 </body>
 </html> 

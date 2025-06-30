@@ -1,5 +1,5 @@
 // Плагин для выравнивания вариантов компонента
-figma.showUI(__html__, { width: 360, height: 420 });
+figma.showUI(__html__, { width: 360, height: 450 });
 
 // Функция для получения всех доступных свойств вариантов
 function getVariantProperties(componentSet) {
@@ -15,6 +15,55 @@ function getVariantProperties(componentSet) {
   });
   
   return Array.from(allProperties);
+}
+
+// Функция для получения ComponentSet из выделения
+function getComponentSetFromSelection() {
+  const selection = figma.currentPage.selection;
+  
+  if (selection.length === 0) {
+    return null;
+  }
+
+  for (const node of selection) {
+    if (node.type === 'COMPONENT_SET') {
+      return node;
+    } else if (node.type === 'COMPONENT' && node.parent && node.parent.type === 'COMPONENT_SET') {
+      return node.parent;
+    }
+  }
+  
+  return null;
+}
+
+// Функция для отправки информации о текущем выделении в UI
+function updateSelectionInfo() {
+  const componentSet = getComponentSetFromSelection();
+  
+  if (componentSet) {
+    const properties = getVariantProperties(componentSet);
+    const variantCount = componentSet.children.filter(child => child.type === 'COMPONENT').length;
+    
+    figma.ui.postMessage({ 
+      type: 'selection-updated', 
+      data: {
+        componentSetName: componentSet.name,
+        properties: properties,
+        variantCount: variantCount,
+        hasValidSelection: true
+      }
+    });
+  } else {
+    figma.ui.postMessage({ 
+      type: 'selection-updated', 
+      data: {
+        componentSetName: null,
+        properties: [],
+        variantCount: 0,
+        hasValidSelection: false
+      }
+    });
+  }
 }
 
 // Функция для создания ключа сортировки на основе всех свойств кроме группирующего
@@ -224,40 +273,21 @@ function setupGridLayout(componentSet, variants, spacing, columns, padding) {
   componentSet.resize(totalWidth, totalHeight);
 }
 
+// Отслеживание изменения выделения
+figma.on('selectionchange', () => {
+  updateSelectionInfo();
+});
+
 // Обработчик сообщений от UI
 figma.ui.onmessage = (msg) => {
   if (msg.type === 'get-properties') {
-    const selection = figma.currentPage.selection;
-    
-    if (selection.length === 0) {
-      figma.ui.postMessage({ type: 'properties', data: [] });
-      return;
-    }
-
-    let componentSet = null;
-    
-    for (const node of selection) {
-      if (node.type === 'COMPONENT_SET') {
-        componentSet = node;
-        break;
-      } else if (node.type === 'COMPONENT' && node.parent && node.parent.type === 'COMPONENT_SET') {
-        componentSet = node.parent;
-        break;
-      }
-    }
-    
-    if (componentSet) {
-      const properties = getVariantProperties(componentSet);
-      figma.ui.postMessage({ type: 'properties', data: properties });
-    } else {
-      figma.ui.postMessage({ type: 'properties', data: [] });
-    }
+    updateSelectionInfo();
   }
   
   if (msg.type === 'align-variants') {
-    const selection = figma.currentPage.selection;
+    const componentSet = getComponentSetFromSelection();
     
-    if (selection.length === 0) {
+    if (!componentSet) {
       figma.notify('Выберите набор компонентов');
       return;
     }
@@ -267,28 +297,13 @@ figma.ui.onmessage = (msg) => {
     const columns = msg.columns || 2;
     const groupByProperty = msg.groupByProperty || null;
 
-    // Проверяем каждый выбранный элемент
-    let foundComponentSet = false;
-    
-    for (const node of selection) {
-      if (node.type === 'COMPONENT_SET') {
-        alignComponentVariants(node, padding, spacing, columns, groupByProperty);
-        foundComponentSet = true;
-      } else if (node.type === 'COMPONENT') {
-        // Если выбран отдельный компонент, ищем его родительский ComponentSet
-        if (node.parent && node.parent.type === 'COMPONENT_SET') {
-          alignComponentVariants(node.parent, padding, spacing, columns, groupByProperty);
-          foundComponentSet = true;
-        }
-      }
-    }
-    
-    if (!foundComponentSet) {
-      figma.notify('Выберите набор компонентов или компонент внутри набора');
-    }
+    alignComponentVariants(componentSet, padding, spacing, columns, groupByProperty);
   }
   
   if (msg.type === 'cancel') {
     figma.closePlugin();
   }
 };
+
+// Инициализация - отправляем информацию о текущем выделении
+updateSelectionInfo();
