@@ -1,5 +1,5 @@
 // Плагин для выравнивания вариантов компонента
-figma.showUI(__html__, { width: 360, height: 550 });
+figma.showUI(__html__, { width: 360, height: 580 });
 
 // Функция для получения всех доступных свойств вариантов
 function getVariantProperties(componentSet) {
@@ -154,6 +154,7 @@ function alignComponentVariants(
   spacing = 20, 
   columnSpacing = 40, 
   groupSpacing = 80, 
+  groupsPerRow = 3,
   groupProperties = [], 
   columnProperty = null
 ) {
@@ -173,17 +174,18 @@ function alignComponentVariants(
     // Отключаем auto-layout
     componentSet.layoutMode = 'NONE';
     
-    if (groupProperties.length > 0 || columnProperty) {
-      // Многоуровневая группировка
-      const groups = createMultiLevelGroups(variants, groupProperties, columnProperty);
-      setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing);
-      
-      const groupCount = Object.keys(groups).length;
-      const totalColumns = Object.values(groups).reduce((max, group) => 
-        Math.max(max, Object.keys(group).length), 0);
-        
-      figma.notify(`Создано ${groupCount} групп с ${totalColumns} максимум колонок в группе`);
-    } else {
+         if (groupProperties.length > 0 || columnProperty) {
+       // Многоуровневая группировка
+       const groups = createMultiLevelGroups(variants, groupProperties, columnProperty);
+       setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow);
+       
+       const groupCount = Object.keys(groups).length;
+       const totalColumns = Object.values(groups).reduce((max, group) => 
+         Math.max(max, Object.keys(group).length), 0);
+       const rows = Math.ceil(groupCount / groupsPerRow);
+         
+       figma.notify(`Создано ${groupCount} групп (${rows} строк по ${groupsPerRow} макс.) с ${totalColumns} максимум колонок в группе`);
+     } else {
       // Простая сетка без группировки
       setupSimpleGridLayout(componentSet, variants, padding, spacing);
       figma.notify(`Варианты выровнены в простую сетку`);
@@ -196,7 +198,7 @@ function alignComponentVariants(
 }
 
 // Функция для создания многоуровневого Grid layout
-function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing) {
+function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow) {
   // Находим максимальные размеры среди всех компонентов
   let maxWidth = 0;
   let maxHeight = 0;
@@ -211,44 +213,86 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
   });
   
   const groupKeys = Object.keys(groups).sort();
-  let currentGroupX = padding;
-  let totalHeight = 0;
   
-  groupKeys.forEach((groupKey, groupIndex) => {
-    const group = groups[groupKey];
-    const columnKeys = Object.keys(group).sort();
+  // Рассчитываем размеры строк и максимальную ширину строки
+  const rowHeights = [];
+  const rowWidths = [];
+  let maxRowWidth = 0;
+  
+  // Группируем по строкам и рассчитываем размеры
+  for (let rowIndex = 0; rowIndex < Math.ceil(groupKeys.length / groupsPerRow); rowIndex++) {
+    const rowGroupKeys = groupKeys.slice(rowIndex * groupsPerRow, (rowIndex + 1) * groupsPerRow);
+    let rowHeight = 0;
+    let rowWidth = padding;
     
-    // Находим максимальное количество элементов в колонке этой группы
-    const maxItemsInGroup = Math.max(...columnKeys.map(key => group[key].length));
-    const groupHeight = maxItemsInGroup * maxHeight + (maxItemsInGroup - 1) * spacing;
-    
-    // Позиционируем колонки внутри группы
-    columnKeys.forEach((columnKey, columnIndex) => {
-      const columnVariants = group[columnKey];
-      const columnX = currentGroupX + columnIndex * (maxWidth + columnSpacing);
+    rowGroupKeys.forEach((groupKey, groupInRowIndex) => {
+      const group = groups[groupKey];
+      const columnKeys = Object.keys(group).sort();
       
-      // Позиционируем варианты внутри колонки
-      columnVariants.forEach((variant, itemIndex) => {
-        variant.x = columnX;
-        variant.y = padding + itemIndex * (maxHeight + spacing);
-      });
+      // Размеры группы
+      const maxItemsInGroup = Math.max(...columnKeys.map(key => group[key].length));
+      const groupHeight = maxItemsInGroup * maxHeight + (maxItemsInGroup - 1) * spacing;
+      const groupWidth = columnKeys.length * maxWidth + (columnKeys.length - 1) * columnSpacing;
+      
+      rowHeight = Math.max(rowHeight, groupHeight);
+      rowWidth += groupWidth;
+      
+      // Добавляем отступ между группами (кроме последней в строке)
+      if (groupInRowIndex < rowGroupKeys.length - 1) {
+        rowWidth += groupSpacing;
+      }
     });
     
-    // Обновляем позицию для следующей группы
-    const groupWidth = columnKeys.length * maxWidth + (columnKeys.length - 1) * columnSpacing;
-    currentGroupX += groupWidth + groupSpacing;
+    rowWidth += padding; // Добавляем padding справа
+    rowHeights.push(rowHeight);
+    rowWidths.push(rowWidth);
+    maxRowWidth = Math.max(maxRowWidth, rowWidth);
+  }
+  
+  // Позиционируем компоненты
+  let currentRowY = padding;
+  
+  for (let rowIndex = 0; rowIndex < Math.ceil(groupKeys.length / groupsPerRow); rowIndex++) {
+    const rowGroupKeys = groupKeys.slice(rowIndex * groupsPerRow, (rowIndex + 1) * groupsPerRow);
+    let currentGroupX = padding;
     
-    // Обновляем общую высоту
-    totalHeight = Math.max(totalHeight, groupHeight);
-  });
+    rowGroupKeys.forEach((groupKey, groupInRowIndex) => {
+      const group = groups[groupKey];
+      const columnKeys = Object.keys(group).sort();
+      
+      // Позиционируем колонки внутри группы
+      columnKeys.forEach((columnKey, columnIndex) => {
+        const columnVariants = group[columnKey];
+        const columnX = currentGroupX + columnIndex * (maxWidth + columnSpacing);
+        
+        // Позиционируем варианты внутри колонки
+        columnVariants.forEach((variant, itemIndex) => {
+          variant.x = columnX;
+          variant.y = currentRowY + itemIndex * (maxHeight + spacing);
+        });
+      });
+      
+      // Обновляем позицию для следующей группы в строке
+      const groupWidth = columnKeys.length * maxWidth + (columnKeys.length - 1) * columnSpacing;
+      currentGroupX += groupWidth;
+      
+      // Добавляем отступ между группами (кроме последней в строке)
+      if (groupInRowIndex < rowGroupKeys.length - 1) {
+        currentGroupX += groupSpacing;
+      }
+    });
+    
+    // Переходим к следующей строке
+    currentRowY += rowHeights[rowIndex] + (rowIndex < rowHeights.length - 1 ? groupSpacing : 0);
+  }
   
   // Рассчитываем общие размеры ComponentSet
-  const totalWidth = currentGroupX - groupSpacing + padding; // Убираем последний groupSpacing
-  const finalHeight = totalHeight + 2 * padding;
+  const totalWidth = maxRowWidth;
+  const totalHeight = currentRowY + padding;
   
-  componentSet.resize(totalWidth, finalHeight);
+  componentSet.resize(totalWidth, totalHeight);
   
-  console.log(`Groups positioned: ${groupKeys.length} groups, total size: ${totalWidth}x${finalHeight}`);
+  console.log(`Groups positioned: ${groupKeys.length} groups in ${Math.ceil(groupKeys.length / groupsPerRow)} rows, total size: ${totalWidth}x${totalHeight}`);
 }
 
 // Функция для создания простого Grid layout (резервная)
@@ -296,6 +340,7 @@ figma.ui.onmessage = (msg) => {
     const spacing = msg.spacing || 20;
     const columnSpacing = msg.columnSpacing || 40;
     const groupSpacing = msg.groupSpacing || 80;
+    const groupsPerRow = msg.groupsPerRow || 3;
     const groupProperties = msg.groupProperties || [];
     const columnProperty = msg.columnProperty || null;
 
@@ -305,6 +350,7 @@ figma.ui.onmessage = (msg) => {
       spacing, 
       columnSpacing, 
       groupSpacing, 
+      groupsPerRow,
       groupProperties, 
       columnProperty
     );

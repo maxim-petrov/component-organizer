@@ -320,6 +320,19 @@
           placeholder="80"
         >
       </div>
+      
+      <div class="setting-group">
+        <label class="setting-label" for="groups-per-row-input">Максимум групп в строке:</label>
+        <input 
+          type="number" 
+          id="groups-per-row-input" 
+          class="setting-input" 
+          value="3" 
+          min="1" 
+          max="10"
+          placeholder="3"
+        >
+      </div>
     </div>
     
     <div class="grouping-section" id="grouping-section">
@@ -350,6 +363,7 @@
     <div class="features">
       <div class="feature">Многоуровневая группировка по нескольким свойствам</div>
       <div class="feature">Настраиваемые отступы между колонками и группами</div>
+      <div class="feature">Автоматический перенос групп на новую строку</div>
       <div class="feature">Синхронная сортировка внутри групп</div>
       <div class="feature">Автоматический расчет размеров</div>
     </div>
@@ -479,6 +493,7 @@
       const spacing = parseInt(document.getElementById('spacing-input').value) || 20;
       const columnSpacing = parseInt(document.getElementById('column-spacing-input').value) || 40;
       const groupSpacing = parseInt(document.getElementById('group-spacing-input').value) || 80;
+      const groupsPerRow = parseInt(document.getElementById('groups-per-row-input').value) || 3;
       const groupProperties = getSelectedGroupProperties();
       const columnProperty = document.getElementById('column-property-select').value;
       
@@ -489,6 +504,7 @@
           spacing: spacing,
           columnSpacing: columnSpacing,
           groupSpacing: groupSpacing,
+          groupsPerRow: groupsPerRow,
           groupProperties: groupProperties,
           columnProperty: columnProperty === 'none' ? null : columnProperty
         } 
@@ -520,6 +536,9 @@
         if (e.target.id === 'group-spacing-input') {
           if (value < 0) e.target.value = 0;
           if (value > 300) e.target.value = 300;
+        } else if (e.target.id === 'groups-per-row-input') {
+          if (value < 1) e.target.value = 1;
+          if (value > 10) e.target.value = 10;
         } else {
           if (value < 0) e.target.value = 0;
           if (value > 200) e.target.value = 200;
