@@ -90,6 +90,44 @@ function createSortingKey(variant, excludeProperties) {
     .join('|');
 }
 
+// Функция для создания текстовой аннотации
+function createAnnotation(text, x, y, fontSize = 10, color = {r: 0.4, g: 0.4, b: 0.4}) {
+  const textNode = figma.createText();
+  
+  // Загружаем шрифт (используем стандартный шрифт Figma)
+  figma.loadFontAsync({ family: "Inter", style: "Medium" }).then(() => {
+    textNode.fontName = { family: "Inter", style: "Medium" };
+    textNode.fontSize = fontSize;
+    textNode.fills = [{ type: 'SOLID', color: color }];
+    textNode.characters = text;
+    
+    // Позиционируем аннотацию
+    textNode.x = x;
+    textNode.y = y;
+  }).catch(() => {
+    // Если Inter недоступен, используем системный шрифт
+    figma.loadFontAsync({ family: "Roboto", style: "Medium" }).then(() => {
+      textNode.fontName = { family: "Roboto", style: "Medium" };
+      textNode.fontSize = fontSize;
+      textNode.fills = [{ type: 'SOLID', color: color }];
+      textNode.characters = text;
+      
+      textNode.x = x;
+      textNode.y = y;
+    }).catch(() => {
+      // Последняя попытка с базовым шрифтом
+      textNode.fontSize = fontSize;
+      textNode.fills = [{ type: 'SOLID', color: color }];
+      textNode.characters = text;
+      
+      textNode.x = x;
+      textNode.y = y;
+    });
+  });
+  
+  return textNode;
+}
+
 // Функция для многоуровневой группировки вариантов
 function createMultiLevelGroups(variants, groupProperties, columnProperty) {
   // Сначала группируем по основным свойствам
@@ -157,7 +195,8 @@ function alignComponentVariants(
   groupsPerRow = 3,
   columnDirection = 'horizontal',
   groupProperties = [], 
-  columnProperty = null
+  columnProperty = null,
+  showAnnotations = false
 ) {
   if (!componentSet || componentSet.type !== 'COMPONENT_SET') {
     figma.notify('Выберите набор компонентов (Component Set)');
@@ -175,23 +214,32 @@ function alignComponentVariants(
     // Отключаем auto-layout
     componentSet.layoutMode = 'NONE';
     
-         if (groupProperties.length > 0 || columnProperty) {
-       // Многоуровневая группировка
-       const groups = createMultiLevelGroups(variants, groupProperties, columnProperty);
-       setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection);
-       
-       const groupCount = Object.keys(groups).length;
-       const totalColumns = Object.values(groups).reduce((max, group) => 
-         Math.max(max, Object.keys(group).length), 0);
-       const rows = Math.ceil(groupCount / groupsPerRow);
-       const directionText = columnDirection === 'vertical' ? 'вертикально' : 'горизонтально';
-         
-       figma.notify(`Создано ${groupCount} групп (${rows} строк по ${groupsPerRow} макс.) с ${totalColumns} максимум колонок в группе, направление: ${directionText}`);
-     } else {
-      // Простая сетка без группировки
-      setupSimpleGridLayout(componentSet, variants, padding, spacing);
-      figma.notify(`Варианты выровнены в простую сетку`);
+    // Удаляем существующие аннотации (всегда, чтобы можно было убрать их при выключении опции)
+    // Ищем аннотации в родительском контейнере, а не в ComponentSet
+    const parentNode = componentSet.parent;
+    if (parentNode) {
+      const existingAnnotations = parentNode.children.filter(child => 
+        child.type === 'TEXT' && child.name.startsWith('annotation-'));
+      existingAnnotations.forEach(annotation => annotation.remove());
     }
+    
+    if (groupProperties.length > 0 || columnProperty) {
+      // Многоуровневая группировка
+      const groups = createMultiLevelGroups(variants, groupProperties, columnProperty);
+      setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations);
+      
+      const groupCount = Object.keys(groups).length;
+      const totalColumns = Object.values(groups).reduce((max, group) => 
+        Math.max(max, Object.keys(group).length), 0);
+      const rows = Math.ceil(groupCount / groupsPerRow);
+      const directionText = columnDirection === 'vertical' ? 'вертикально' : 'горизонтально';
+        
+      figma.notify(`Создано ${groupCount} групп (${rows} строк по ${groupsPerRow} макс.) с ${totalColumns} максимум колонок в группе, направление: ${directionText}`);
+    } else {
+     // Простая сетка без группировки
+     setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations);
+     figma.notify(`Варианты выровнены в простую сетку`);
+   }
 
   } catch (error) {
     figma.notify('Ошибка при выравнивании: ' + error.message);
@@ -200,7 +248,10 @@ function alignComponentVariants(
 }
 
 // Функция для создания многоуровневого Grid layout
-function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection) {
+function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations) {
+  const parentNode = componentSet.parent;
+  const componentSetX = componentSet.x;
+  const componentSetY = componentSet.y;
   // Находим максимальные размеры среди всех компонентов
   let maxWidth = 0;
   let maxHeight = 0;
@@ -265,6 +316,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
   
   // Позиционируем компоненты
   let currentRowY = padding;
+  const annotationOffset = 15; // Отступ для аннотаций
   
   for (let rowIndex = 0; rowIndex < Math.ceil(groupKeys.length / groupsPerRow); rowIndex++) {
     const rowGroupKeys = groupKeys.slice(rowIndex * groupsPerRow, (rowIndex + 1) * groupsPerRow);
@@ -281,25 +333,105 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           const columnVariants = group[columnKey];
           const columnX = currentGroupX + columnIndex * (maxWidth + columnSpacing);
           
+          // Создаем аннотацию для колонки (если включены аннотации и есть название колонки)
+          if (showAnnotations && columnKey !== 'default' && parentNode) {
+            const columnAnnotation = createAnnotation(
+              columnKey, 
+              componentSetX + columnX, 
+              componentSetY + currentRowY - annotationOffset,
+              9,
+              {r: 0.2, g: 0.5, b: 0.8}
+            );
+            columnAnnotation.name = `annotation-column-${columnKey}`;
+            parentNode.appendChild(columnAnnotation);
+          }
+          
           // Позиционируем варианты внутри колонки
           columnVariants.forEach((variant, itemIndex) => {
             variant.x = columnX;
             variant.y = currentRowY + itemIndex * (maxHeight + spacing);
+            
+            // Создаем аннотацию для варианта (если включены аннотации)
+            if (showAnnotations && parentNode) {
+              const variantName = variant.name || `Variant ${itemIndex + 1}`;
+              const variantAnnotation = createAnnotation(
+                variantName,
+                componentSetX + columnX + maxWidth + 5,
+                componentSetY + variant.y + maxHeight / 2 - 5,
+                8,
+                {r: 0.6, g: 0.6, b: 0.6}
+              );
+              variantAnnotation.name = `annotation-variant-${variant.id}`;
+              parentNode.appendChild(variantAnnotation);
+            }
           });
         });
         
         groupWidth = columnKeys.length * maxWidth + (columnKeys.length - 1) * columnSpacing;
+        
+        // Создаем аннотацию для группы (если включены аннотации и есть название группы)
+        if (showAnnotations && groupKey !== 'default' && parentNode) {
+          const groupAnnotation = createAnnotation(
+            groupKey,
+            componentSetX + currentGroupX,
+            componentSetY + currentRowY - annotationOffset - 15,
+            10,
+            {r: 0.8, g: 0.2, b: 0.2}
+          );
+          groupAnnotation.name = `annotation-group-${groupKey}`;
+          parentNode.appendChild(groupAnnotation);
+        }
       } else {
         // Вертикальное расположение колонок
         let currentColumnY = currentRowY;
         
+        // Создаем аннотацию для группы (если включены аннотации и есть название группы)
+        if (showAnnotations && groupKey !== 'default' && parentNode) {
+          const groupAnnotation = createAnnotation(
+            groupKey,
+            componentSetX + currentGroupX - 10,
+            componentSetY + currentColumnY - annotationOffset - 15,
+            10,
+            {r: 0.8, g: 0.2, b: 0.2}
+          );
+          groupAnnotation.name = `annotation-group-${groupKey}`;
+          parentNode.appendChild(groupAnnotation);
+        }
+        
         columnKeys.forEach((columnKey, columnIndex) => {
           const columnVariants = group[columnKey];
+          
+          // Создаем аннотацию для колонки (если включены аннотации и есть название колонки)
+          if (showAnnotations && columnKey !== 'default' && parentNode) {
+            const columnAnnotation = createAnnotation(
+              columnKey,
+              componentSetX + currentGroupX - 10,
+              componentSetY + currentColumnY - annotationOffset,
+              9,
+              {r: 0.2, g: 0.5, b: 0.8}
+            );
+            columnAnnotation.name = `annotation-column-${columnKey}`;
+            parentNode.appendChild(columnAnnotation);
+          }
           
           // Позиционируем варианты внутри колонки
           columnVariants.forEach((variant, itemIndex) => {
             variant.x = currentGroupX;
             variant.y = currentColumnY + itemIndex * (maxHeight + spacing);
+            
+            // Создаем аннотацию для варианта (если включены аннотации)
+            if (showAnnotations && parentNode) {
+              const variantName = variant.name || `Variant ${itemIndex + 1}`;
+              const variantAnnotation = createAnnotation(
+                variantName,
+                componentSetX + currentGroupX + maxWidth + 5,
+                componentSetY + variant.y + maxHeight / 2 - 5,
+                8,
+                {r: 0.6, g: 0.6, b: 0.6}
+              );
+              variantAnnotation.name = `annotation-variant-${variant.id}`;
+              parentNode.appendChild(variantAnnotation);
+            }
           });
           
           // Переходим к следующей колонке по вертикали
@@ -337,7 +469,11 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
 }
 
 // Функция для создания простого Grid layout (резервная)
-function setupSimpleGridLayout(componentSet, variants, padding, spacing) {
+function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations) {
+  const parentNode = componentSet.parent;
+  const componentSetX = componentSet.x;
+  const componentSetY = componentSet.y;
+  
   // Простая сетка в одну колонку
   let maxWidth = 0;
   let maxHeight = 0;
@@ -350,9 +486,23 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing) {
   variants.forEach((variant, index) => {
     variant.x = padding;
     variant.y = padding + index * (maxHeight + spacing);
+    
+    // Создаем аннотацию для варианта (если включены аннотации)
+    if (showAnnotations && parentNode) {
+      const variantName = variant.name || `Variant ${index + 1}`;
+      const variantAnnotation = createAnnotation(
+        variantName,
+        componentSetX + padding + maxWidth + 5,
+        componentSetY + variant.y + maxHeight / 2 - 5,
+        8,
+        {r: 0.6, g: 0.6, b: 0.6}
+      );
+      variantAnnotation.name = `annotation-variant-${variant.id}`;
+      parentNode.appendChild(variantAnnotation);
+    }
   });
   
-  const totalWidth = maxWidth + 2 * padding;
+  const totalWidth = maxWidth + 2 * padding + (showAnnotations ? 150 : 0); // Дополнительное место для аннотаций
   const totalHeight = variants.length * maxHeight + (variants.length - 1) * spacing + 2 * padding;
   
   componentSet.resize(totalWidth, totalHeight);
@@ -385,6 +535,7 @@ figma.ui.onmessage = (msg) => {
     const columnDirection = msg.columnDirection || 'horizontal';
     const groupProperties = msg.groupProperties || [];
     const columnProperty = msg.columnProperty || null;
+    const showAnnotations = msg.showAnnotations || false;
 
     alignComponentVariants(
       componentSet, 
@@ -395,7 +546,8 @@ figma.ui.onmessage = (msg) => {
       groupsPerRow,
       columnDirection,
       groupProperties, 
-      columnProperty
+      columnProperty,
+      showAnnotations
     );
   }
   
