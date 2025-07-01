@@ -90,6 +90,34 @@ function createSortingKey(variant, excludeProperties) {
     .join('|');
 }
 
+// Функция для создания папки аннотаций
+function createAnnotationsFolder(componentSet) {
+  const parentNode = componentSet.parent;
+  if (!parentNode) return null;
+  
+  const annotationsFolderName = `${componentSet.name} annotations`;
+  const annotationsFolder = figma.createFrame();
+  annotationsFolder.name = annotationsFolderName;
+  annotationsFolder.layoutMode = 'NONE';
+  annotationsFolder.fills = []; // Прозрачный фон
+  annotationsFolder.strokes = []; // Без обводки
+  annotationsFolder.clipsContent = false; // Не обрезать содержимое
+  
+  // Позиционируем папку в том же месте что и ComponentSet
+  annotationsFolder.x = componentSet.x;
+  annotationsFolder.y = componentSet.y;
+  
+  // Даем папке большой размер чтобы вместить все аннотации
+  const extraSpace = 200; // Дополнительное место для аннотаций
+  annotationsFolder.resize(
+    componentSet.width + extraSpace, 
+    componentSet.height + extraSpace
+  );
+  
+  parentNode.appendChild(annotationsFolder);
+  return annotationsFolder;
+}
+
 // Функция для создания текстовой аннотации
 function createAnnotation(text, x, y, fontSize = 10, color = {r: 0.4, g: 0.4, b: 0.4}) {
   const textNode = figma.createText();
@@ -214,13 +242,15 @@ function alignComponentVariants(
     // Отключаем auto-layout
     componentSet.layoutMode = 'NONE';
     
-    // Удаляем существующие аннотации (всегда, чтобы можно было убрать их при выключении опции)
-    // Ищем аннотации в родительском контейнере, а не в ComponentSet
+    // Удаляем существующую папку аннотаций (всегда, чтобы можно было убрать их при выключении опции)
     const parentNode = componentSet.parent;
+    const annotationsFolderName = `${componentSet.name} annotations`;
     if (parentNode) {
-      const existingAnnotations = parentNode.children.filter(child => 
-        child.type === 'TEXT' && child.name.startsWith('annotation-'));
-      existingAnnotations.forEach(annotation => annotation.remove());
+      const existingAnnotationsFolder = parentNode.children.find(child => 
+        child.name === annotationsFolderName);
+      if (existingAnnotationsFolder) {
+        existingAnnotationsFolder.remove();
+      }
     }
     
     if (groupProperties.length > 0 || columnProperty) {
@@ -252,6 +282,12 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
   const parentNode = componentSet.parent;
   const componentSetX = componentSet.x;
   const componentSetY = componentSet.y;
+  
+  // Создаем папку для аннотаций если нужно
+  let annotationsFolder = null;
+  if (showAnnotations && parentNode) {
+    annotationsFolder = createAnnotationsFolder(componentSet);
+  }
   // Находим максимальные размеры среди всех компонентов
   let maxWidth = 0;
   let maxHeight = 0;
@@ -334,16 +370,16 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           const columnX = currentGroupX + columnIndex * (maxWidth + columnSpacing);
           
           // Создаем аннотацию для колонки (если включены аннотации и есть название колонки)
-          if (showAnnotations && columnKey !== 'default' && parentNode) {
+          if (showAnnotations && columnKey !== 'default' && annotationsFolder) {
             const columnAnnotation = createAnnotation(
               columnKey, 
-              componentSetX + columnX, 
-              componentSetY + currentRowY - annotationOffset,
+              columnX, 
+              currentRowY - annotationOffset,
               9,
               {r: 0.2, g: 0.5, b: 0.8}
             );
             columnAnnotation.name = `annotation-column-${columnKey}`;
-            parentNode.appendChild(columnAnnotation);
+            annotationsFolder.appendChild(columnAnnotation);
           }
           
           // Позиционируем варианты внутри колонки
@@ -352,17 +388,17 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             variant.y = currentRowY + itemIndex * (maxHeight + spacing);
             
             // Создаем аннотацию для варианта (если включены аннотации)
-            if (showAnnotations && parentNode) {
+            if (showAnnotations && annotationsFolder) {
               const variantName = variant.name || `Variant ${itemIndex + 1}`;
               const variantAnnotation = createAnnotation(
                 variantName,
-                componentSetX + columnX + maxWidth + 5,
-                componentSetY + variant.y + maxHeight / 2 - 5,
+                columnX + maxWidth + 5,
+                variant.y + maxHeight / 2 - 5,
                 8,
                 {r: 0.6, g: 0.6, b: 0.6}
               );
               variantAnnotation.name = `annotation-variant-${variant.id}`;
-              parentNode.appendChild(variantAnnotation);
+              annotationsFolder.appendChild(variantAnnotation);
             }
           });
         });
@@ -370,48 +406,48 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
         groupWidth = columnKeys.length * maxWidth + (columnKeys.length - 1) * columnSpacing;
         
         // Создаем аннотацию для группы (если включены аннотации и есть название группы)
-        if (showAnnotations && groupKey !== 'default' && parentNode) {
+        if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
           const groupAnnotation = createAnnotation(
             groupKey,
-            componentSetX + currentGroupX,
-            componentSetY + currentRowY - annotationOffset - 15,
+            currentGroupX,
+            currentRowY - annotationOffset - 15,
             10,
             {r: 0.8, g: 0.2, b: 0.2}
           );
           groupAnnotation.name = `annotation-group-${groupKey}`;
-          parentNode.appendChild(groupAnnotation);
+          annotationsFolder.appendChild(groupAnnotation);
         }
       } else {
         // Вертикальное расположение колонок
         let currentColumnY = currentRowY;
         
         // Создаем аннотацию для группы (если включены аннотации и есть название группы)
-        if (showAnnotations && groupKey !== 'default' && parentNode) {
+        if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
           const groupAnnotation = createAnnotation(
             groupKey,
-            componentSetX + currentGroupX - 10,
-            componentSetY + currentColumnY - annotationOffset - 15,
+            currentGroupX - 10,
+            currentColumnY - annotationOffset - 15,
             10,
             {r: 0.8, g: 0.2, b: 0.2}
           );
           groupAnnotation.name = `annotation-group-${groupKey}`;
-          parentNode.appendChild(groupAnnotation);
+          annotationsFolder.appendChild(groupAnnotation);
         }
         
         columnKeys.forEach((columnKey, columnIndex) => {
           const columnVariants = group[columnKey];
           
           // Создаем аннотацию для колонки (если включены аннотации и есть название колонки)
-          if (showAnnotations && columnKey !== 'default' && parentNode) {
+          if (showAnnotations && columnKey !== 'default' && annotationsFolder) {
             const columnAnnotation = createAnnotation(
               columnKey,
-              componentSetX + currentGroupX - 10,
-              componentSetY + currentColumnY - annotationOffset,
+              currentGroupX - 10,
+              currentColumnY - annotationOffset,
               9,
               {r: 0.2, g: 0.5, b: 0.8}
             );
             columnAnnotation.name = `annotation-column-${columnKey}`;
-            parentNode.appendChild(columnAnnotation);
+            annotationsFolder.appendChild(columnAnnotation);
           }
           
           // Позиционируем варианты внутри колонки
@@ -420,17 +456,17 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             variant.y = currentColumnY + itemIndex * (maxHeight + spacing);
             
             // Создаем аннотацию для варианта (если включены аннотации)
-            if (showAnnotations && parentNode) {
+            if (showAnnotations && annotationsFolder) {
               const variantName = variant.name || `Variant ${itemIndex + 1}`;
               const variantAnnotation = createAnnotation(
                 variantName,
-                componentSetX + currentGroupX + maxWidth + 5,
-                componentSetY + variant.y + maxHeight / 2 - 5,
+                currentGroupX + maxWidth + 5,
+                variant.y + maxHeight / 2 - 5,
                 8,
                 {r: 0.6, g: 0.6, b: 0.6}
               );
               variantAnnotation.name = `annotation-variant-${variant.id}`;
-              parentNode.appendChild(variantAnnotation);
+              annotationsFolder.appendChild(variantAnnotation);
             }
           });
           
@@ -474,6 +510,12 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
   const componentSetX = componentSet.x;
   const componentSetY = componentSet.y;
   
+  // Создаем папку для аннотаций если нужно
+  let annotationsFolder = null;
+  if (showAnnotations && parentNode) {
+    annotationsFolder = createAnnotationsFolder(componentSet);
+  }
+  
   // Простая сетка в одну колонку
   let maxWidth = 0;
   let maxHeight = 0;
@@ -488,17 +530,17 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
     variant.y = padding + index * (maxHeight + spacing);
     
     // Создаем аннотацию для варианта (если включены аннотации)
-    if (showAnnotations && parentNode) {
+    if (showAnnotations && annotationsFolder) {
       const variantName = variant.name || `Variant ${index + 1}`;
       const variantAnnotation = createAnnotation(
         variantName,
-        componentSetX + padding + maxWidth + 5,
-        componentSetY + variant.y + maxHeight / 2 - 5,
+        padding + maxWidth + 5,
+        variant.y + maxHeight / 2 - 5,
         8,
         {r: 0.6, g: 0.6, b: 0.6}
       );
       variantAnnotation.name = `annotation-variant-${variant.id}`;
-      parentNode.appendChild(variantAnnotation);
+      annotationsFolder.appendChild(variantAnnotation);
     }
   });
   
