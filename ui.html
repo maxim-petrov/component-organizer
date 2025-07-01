@@ -170,6 +170,26 @@
       font-style: italic;
     }
     
+    .radio-group {
+      display: flex;
+      gap: 12px;
+      margin-top: 4px;
+    }
+    
+    .radio-option {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      font-size: 12px;
+      cursor: pointer;
+      color: #333333;
+    }
+    
+    .radio-option input[type="radio"] {
+      margin: 0;
+      cursor: pointer;
+    }
+    
     .refresh-btn {
       padding: 4px 8px;
       background: #f0f0f0;
@@ -333,6 +353,20 @@
           placeholder="3"
         >
       </div>
+      
+      <div class="setting-group">
+        <label class="setting-label">Направление колонок внутри групп:</label>
+        <div class="radio-group">
+          <label class="radio-option">
+            <input type="radio" name="column-direction" value="horizontal" checked>
+            <span>По горизонтали</span>
+          </label>
+          <label class="radio-option">
+            <input type="radio" name="column-direction" value="vertical">
+            <span>По вертикали</span>
+          </label>
+        </div>
+      </div>
     </div>
     
     <div class="grouping-section" id="grouping-section">
@@ -362,6 +396,7 @@
     
     <div class="features">
       <div class="feature">Многоуровневая группировка по нескольким свойствам</div>
+      <div class="feature">Горизонтальное и вертикальное направление колонок</div>
       <div class="feature">Настраиваемые отступы между колонками и группами</div>
       <div class="feature">Автоматический перенос групп на новую строку</div>
       <div class="feature">Синхронная сортировка внутри групп</div>
@@ -494,6 +529,7 @@
       const columnSpacing = parseInt(document.getElementById('column-spacing-input').value) || 40;
       const groupSpacing = parseInt(document.getElementById('group-spacing-input').value) || 80;
       const groupsPerRow = parseInt(document.getElementById('groups-per-row-input').value) || 3;
+      const columnDirection = document.querySelector('input[name="column-direction"]:checked').value;
       const groupProperties = getSelectedGroupProperties();
       const columnProperty = document.getElementById('column-property-select').value;
       
@@ -505,6 +541,7 @@
           columnSpacing: columnSpacing,
           groupSpacing: groupSpacing,
           groupsPerRow: groupsPerRow,
+          columnDirection: columnDirection,
           groupProperties: groupProperties,
           columnProperty: columnProperty === 'none' ? null : columnProperty
         } 
