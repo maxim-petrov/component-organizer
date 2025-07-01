@@ -1,5 +1,5 @@
 // Плагин для выравнивания вариантов компонента
-figma.showUI(__html__, { width: 360, height: 450 });
+figma.showUI(__html__, { width: 360, height: 550 });
 
 // Функция для получения всех доступных свойств вариантов
 function getVariantProperties(componentSet) {
@@ -66,73 +66,97 @@ function updateSelectionInfo() {
   }
 }
 
-// Функция для создания ключа сортировки на основе всех свойств кроме группирующего
-function createSortingKey(variant, excludeProperty) {
+// Функция для создания ключа группы на основе выбранных свойств
+function createGroupKey(variant, groupProperties) {
+  if (!variant.variantProperties || groupProperties.length === 0) {
+    return 'default';
+  }
+  
+  return groupProperties
+    .map(prop => `${prop}:${variant.variantProperties[prop] || 'undefined'}`)
+    .join('|');
+}
+
+// Функция для создания ключа сортировки внутри группы
+function createSortingKey(variant, excludeProperties) {
   if (!variant.variantProperties) return '';
   
   const sortingProperties = Object.keys(variant.variantProperties)
-    .filter(prop => prop !== excludeProperty)
-    .sort(); // Сортируем названия свойств для консистентности
+    .filter(prop => !excludeProperties.includes(prop))
+    .sort();
     
   return sortingProperties
     .map(prop => `${prop}:${variant.variantProperties[prop]}`)
     .join('|');
 }
 
-// Функция для получения эталонного порядка сортировки
-function getReferenceSortingOrder(variants, groupByProperty) {
-  const sortingKeys = new Set();
+// Функция для многоуровневой группировки вариантов
+function createMultiLevelGroups(variants, groupProperties, columnProperty) {
+  // Сначала группируем по основным свойствам
+  const mainGroups = {};
   
   variants.forEach(variant => {
-    const key = createSortingKey(variant, groupByProperty);
-    if (key) sortingKeys.add(key);
+    const groupKey = createGroupKey(variant, groupProperties);
+    if (!mainGroups[groupKey]) {
+      mainGroups[groupKey] = [];
+    }
+    mainGroups[groupKey].push(variant);
   });
   
-  return Array.from(sortingKeys).sort();
-}
-
-// Функция для сортировки вариантов в группе по эталонному порядку
-function sortVariantsByReference(variants, groupByProperty, referenceSortingOrder) {
-  return variants.sort((a, b) => {
-    const keyA = createSortingKey(a, groupByProperty);
-    const keyB = createSortingKey(b, groupByProperty);
-    
-    const indexA = referenceSortingOrder.indexOf(keyA);
-    const indexB = referenceSortingOrder.indexOf(keyB);
-    
-    // Если ключ не найден в эталонном порядке, помещаем в конец
-    const finalIndexA = indexA === -1 ? referenceSortingOrder.length : indexA;
-    const finalIndexB = indexB === -1 ? referenceSortingOrder.length : indexB;
-    
-    return finalIndexA - finalIndexB;
-  });
-}
-
-// Функция для группировки вариантов по свойству
-function groupVariantsByProperty(variants, property) {
-  const groups = {};
+  // Затем группируем каждую основную группу по свойству колонок
+  const result = {};
   
-  variants.forEach(variant => {
-    if (variant.variantProperties && variant.variantProperties[property]) {
-      const value = variant.variantProperties[property];
-      if (!groups[value]) {
-        groups[value] = [];
-      }
-      groups[value].push(variant);
+  Object.keys(mainGroups).forEach(groupKey => {
+    const groupVariants = mainGroups[groupKey];
+    
+    if (columnProperty) {
+      // Группируем по свойству колонок
+      const columns = {};
+      groupVariants.forEach(variant => {
+        const columnValue = (variant.variantProperties && variant.variantProperties[columnProperty]) || 'Other';
+        if (!columns[columnValue]) {
+          columns[columnValue] = [];
+        }
+        columns[columnValue].push(variant);
+      });
+      
+      // Сортируем варианты внутри каждой колонки
+      const excludeProps = [...groupProperties, columnProperty];
+      Object.keys(columns).forEach(columnKey => {
+        columns[columnKey].sort((a, b) => {
+          const keyA = createSortingKey(a, excludeProps);
+          const keyB = createSortingKey(b, excludeProps);
+          return keyA.localeCompare(keyB);
+        });
+      });
+      
+      result[groupKey] = columns;
     } else {
-      // Варианты без указанного свойства попадают в группу "Other"
-      if (!groups['Other']) {
-        groups['Other'] = [];
-      }
-      groups['Other'].push(variant);
+      // Если нет свойства для колонок, создаем одну колонку
+      const excludeProps = groupProperties;
+      groupVariants.sort((a, b) => {
+        const keyA = createSortingKey(a, excludeProps);
+        const keyB = createSortingKey(b, excludeProps);
+        return keyA.localeCompare(keyB);
+      });
+      
+      result[groupKey] = { 'default': groupVariants };
     }
   });
   
-  return groups;
+  return result;
 }
 
-// Функция для выравнивания вариантов компонента в Grid
-function alignComponentVariants(componentSet, padding = 40, spacing = 20, columns = 2, groupByProperty = null) {
+// Функция для выравнивания вариантов компонента с многоуровневой группировкой
+function alignComponentVariants(
+  componentSet, 
+  padding = 40, 
+  spacing = 20, 
+  columnSpacing = 40, 
+  groupSpacing = 80, 
+  groupProperties = [], 
+  columnProperty = null
+) {
   if (!componentSet || componentSet.type !== 'COMPONENT_SET') {
     figma.notify('Выберите набор компонентов (Component Set)');
     return;
@@ -146,105 +170,90 @@ function alignComponentVariants(componentSet, padding = 40, spacing = 20, column
       return;
     }
 
-    let arrangedVariants = variants;
-    let actualColumns = Math.min(columns, variants.length);
-    
-    // Если выбрано свойство для группировки
-    if (groupByProperty && groupByProperty !== 'none') {
-      const groups = groupVariantsByProperty(variants, groupByProperty);
-      const groupKeys = Object.keys(groups);
-      
-      if (groupKeys.length > 1) {
-        // Получаем эталонный порядок сортировки
-        const referenceSortingOrder = getReferenceSortingOrder(variants, groupByProperty);
-        
-        // Сортируем варианты в каждой группе по эталонному порядку
-        groupKeys.forEach(groupKey => {
-          groups[groupKey] = sortVariantsByReference(groups[groupKey], groupByProperty, referenceSortingOrder);
-        });
-        
-        // Устанавливаем количество колонок равное количеству групп
-        actualColumns = groupKeys.length;
-        
-        // Переупорядочиваем варианты по группам
-        arrangedVariants = [];
-        groupKeys.forEach(groupKey => {
-          arrangedVariants = arrangedVariants.concat(groups[groupKey]);
-        });
-        
-        figma.notify(`Варианты сгруппированы по "${groupByProperty}": ${groupKeys.join(', ')} с синхронной сортировкой`);
-      } else {
-        figma.notify(`Все варианты имеют одинаковое значение "${groupByProperty}"`);
-      }
-    }
-    
-    // Отключаем auto-layout и включаем Grid
+    // Отключаем auto-layout
     componentSet.layoutMode = 'NONE';
     
-    // Создаем Grid layout
-    if (groupByProperty && groupByProperty !== 'none') {
-      setupGridLayoutByGroups(componentSet, variants, spacing, groupByProperty, padding);
+    if (groupProperties.length > 0 || columnProperty) {
+      // Многоуровневая группировка
+      const groups = createMultiLevelGroups(variants, groupProperties, columnProperty);
+      setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing);
+      
+      const groupCount = Object.keys(groups).length;
+      const totalColumns = Object.values(groups).reduce((max, group) => 
+        Math.max(max, Object.keys(group).length), 0);
+        
+      figma.notify(`Создано ${groupCount} групп с ${totalColumns} максимум колонок в группе`);
     } else {
-      setupGridLayout(componentSet, arrangedVariants, spacing, actualColumns, padding);
+      // Простая сетка без группировки
+      setupSimpleGridLayout(componentSet, variants, padding, spacing);
+      figma.notify(`Варианты выровнены в простую сетку`);
     }
 
-    figma.notify(`Варианты выровнены в Grid ${actualColumns} колонок! Паддинг: ${padding}px, отступ: ${spacing}px`);
   } catch (error) {
     figma.notify('Ошибка при выравнивании: ' + error.message);
+    console.error(error);
   }
 }
 
-// Функция для создания Grid layout с группировкой
-function setupGridLayoutByGroups(componentSet, variants, spacing, groupByProperty, padding) {
-  const groups = groupVariantsByProperty(variants, groupByProperty);
-  const groupKeys = Object.keys(groups).sort(); // Сортируем ключи групп для консистентности
-  
-  // Получаем эталонный порядок сортировки
-  const referenceSortingOrder = getReferenceSortingOrder(variants, groupByProperty);
-  
-  // Сортируем варианты в каждой группе
-  groupKeys.forEach(groupKey => {
-    groups[groupKey] = sortVariantsByReference(groups[groupKey], groupByProperty, referenceSortingOrder);
-  });
-  
+// Функция для создания многоуровневого Grid layout
+function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing) {
   // Находим максимальные размеры среди всех компонентов
   let maxWidth = 0;
   let maxHeight = 0;
   
-  variants.forEach(variant => {
-    if (variant.width > maxWidth) maxWidth = variant.width;
-    if (variant.height > maxHeight) maxHeight = variant.height;
-  });
-  
-  // Находим максимальное количество элементов в группе для расчета высоты
-  const maxItemsInGroup = Math.max(...groupKeys.map(key => groups[key].length));
-  
-  // Позиционируем компоненты по группам (колонкам)
-  groupKeys.forEach((groupKey, groupIndex) => {
-    const groupVariants = groups[groupKey];
-    
-    groupVariants.forEach((variant, itemIndex) => {
-      const x = padding + groupIndex * (maxWidth + spacing);
-      const y = padding + itemIndex * (maxHeight + spacing);
-      
-      variant.x = x;
-      variant.y = y;
+  Object.values(groups).forEach(group => {
+    Object.values(group).forEach(columnVariants => {
+      columnVariants.forEach(variant => {
+        if (variant.width > maxWidth) maxWidth = variant.width;
+        if (variant.height > maxHeight) maxHeight = variant.height;
+      });
     });
   });
   
-  // Устанавливаем размер ComponentSet
-  const totalWidth = groupKeys.length * maxWidth + (groupKeys.length - 1) * spacing + 2 * padding;
-  const totalHeight = maxItemsInGroup * maxHeight + (maxItemsInGroup - 1) * spacing + 2 * padding;
+  const groupKeys = Object.keys(groups).sort();
+  let currentGroupX = padding;
+  let totalHeight = 0;
   
-  componentSet.resize(totalWidth, totalHeight);
+  groupKeys.forEach((groupKey, groupIndex) => {
+    const group = groups[groupKey];
+    const columnKeys = Object.keys(group).sort();
+    
+    // Находим максимальное количество элементов в колонке этой группы
+    const maxItemsInGroup = Math.max(...columnKeys.map(key => group[key].length));
+    const groupHeight = maxItemsInGroup * maxHeight + (maxItemsInGroup - 1) * spacing;
+    
+    // Позиционируем колонки внутри группы
+    columnKeys.forEach((columnKey, columnIndex) => {
+      const columnVariants = group[columnKey];
+      const columnX = currentGroupX + columnIndex * (maxWidth + columnSpacing);
+      
+      // Позиционируем варианты внутри колонки
+      columnVariants.forEach((variant, itemIndex) => {
+        variant.x = columnX;
+        variant.y = padding + itemIndex * (maxHeight + spacing);
+      });
+    });
+    
+    // Обновляем позицию для следующей группы
+    const groupWidth = columnKeys.length * maxWidth + (columnKeys.length - 1) * columnSpacing;
+    currentGroupX += groupWidth + groupSpacing;
+    
+    // Обновляем общую высоту
+    totalHeight = Math.max(totalHeight, groupHeight);
+  });
+  
+  // Рассчитываем общие размеры ComponentSet
+  const totalWidth = currentGroupX - groupSpacing + padding; // Убираем последний groupSpacing
+  const finalHeight = totalHeight + 2 * padding;
+  
+  componentSet.resize(totalWidth, finalHeight);
+  
+  console.log(`Groups positioned: ${groupKeys.length} groups, total size: ${totalWidth}x${finalHeight}`);
 }
 
-// Функция для создания обычного Grid layout
-function setupGridLayout(componentSet, variants, spacing, columns, padding) {
-  // Рассчитываем количество строк
-  const rows = Math.ceil(variants.length / columns);
-  
-  // Находим размеры самого большого компонента для определения размера ячеек
+// Функция для создания простого Grid layout (резервная)
+function setupSimpleGridLayout(componentSet, variants, padding, spacing) {
+  // Простая сетка в одну колонку
   let maxWidth = 0;
   let maxHeight = 0;
   
@@ -253,22 +262,13 @@ function setupGridLayout(componentSet, variants, spacing, columns, padding) {
     if (variant.height > maxHeight) maxHeight = variant.height;
   });
   
-  // Позиционируем компоненты в сетке
   variants.forEach((variant, index) => {
-    const col = index % columns;
-    const row = Math.floor(index / columns);
-    
-    // Рассчитываем позицию с учетом padding и spacing
-    const x = padding + col * (maxWidth + spacing);
-    const y = padding + row * (maxHeight + spacing);
-    
-    variant.x = x;
-    variant.y = y;
+    variant.x = padding;
+    variant.y = padding + index * (maxHeight + spacing);
   });
   
-  // Устанавливаем размер ComponentSet с учетом содержимого и паддинга
-  const totalWidth = columns * maxWidth + (columns - 1) * spacing + 2 * padding;
-  const totalHeight = rows * maxHeight + (rows - 1) * spacing + 2 * padding;
+  const totalWidth = maxWidth + 2 * padding;
+  const totalHeight = variants.length * maxHeight + (variants.length - 1) * spacing + 2 * padding;
   
   componentSet.resize(totalWidth, totalHeight);
 }
@@ -294,10 +294,20 @@ figma.ui.onmessage = (msg) => {
 
     const padding = msg.padding || 40;
     const spacing = msg.spacing || 20;
-    const columns = msg.columns || 2;
-    const groupByProperty = msg.groupByProperty || null;
+    const columnSpacing = msg.columnSpacing || 40;
+    const groupSpacing = msg.groupSpacing || 80;
+    const groupProperties = msg.groupProperties || [];
+    const columnProperty = msg.columnProperty || null;
 
-    alignComponentVariants(componentSet, padding, spacing, columns, groupByProperty);
+    alignComponentVariants(
+      componentSet, 
+      padding, 
+      spacing, 
+      columnSpacing, 
+      groupSpacing, 
+      groupProperties, 
+      columnProperty
+    );
   }
   
   if (msg.type === 'cancel') {
