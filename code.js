@@ -155,26 +155,35 @@ function createAnnotationsFolder(componentSet) {
   if (!parentNode) return null;
   
   const annotationsFolderName = `${componentSet.name} annotations`;
-  const annotationsFolder = figma.createFrame();
-  annotationsFolder.name = annotationsFolderName;
-  annotationsFolder.layoutMode = 'NONE';
-  annotationsFolder.fills = []; // Прозрачный фон
-  annotationsFolder.strokes = []; // Без обводки
-  annotationsFolder.clipsContent = false; // Не обрезать содержимое
   
-  // Позиционируем папку в том же месте что и ComponentSet
-  annotationsFolder.x = componentSet.x;
-  annotationsFolder.y = componentSet.y;
+  // Создаем контейнер для сбора аннотаций
+  const annotationsContainer = {
+    name: annotationsFolderName,
+    parent: parentNode,
+    annotations: [],
+    
+    appendChild: function(child) {
+      this.annotations.push(child);
+      this.parent.appendChild(child);
+    },
+    
+    insertChild: function(index, child) {
+      this.annotations.splice(index, 0, child);
+      this.parent.appendChild(child);
+    },
+    
+    // Метод для создания финальной группы из всех аннотаций
+    createFinalGroup: function() {
+      if (this.annotations.length > 0) {
+        const group = figma.group(this.annotations, this.parent);
+        group.name = this.name;
+        return group;
+      }
+      return null;
+    }
+  };
   
-  // Даем папке большой размер чтобы вместить все аннотации
-  const extraSpace = 200; // Дополнительное место для аннотаций
-  annotationsFolder.resize(
-    componentSet.width + extraSpace, 
-    componentSet.height + extraSpace
-  );
-  
-  parentNode.appendChild(annotationsFolder);
-  return annotationsFolder;
+  return annotationsContainer;
 }
 
 // Функция для создания текстовой аннотации варианта
@@ -753,6 +762,13 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
   
   componentSet.resize(totalWidth, totalHeight);
   
+  // Создаем финальную группу из всех аннотаций
+  if (annotationsFolder && annotationsFolder.createFinalGroup) {
+    setTimeout(() => {
+      annotationsFolder.createFinalGroup();
+    }, 100); // Небольшая задержка для завершения создания всех аннотаций
+  }
+  
   console.log(`Groups positioned: ${groupKeys.length} groups in ${Math.ceil(groupKeys.length / groupsPerRow)} rows, total size: ${totalWidth}x${totalHeight}`);
 }
 
@@ -821,6 +837,13 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
   const totalHeight = variants.length * maxHeight + (variants.length - 1) * spacing + 2 * padding;
   
   componentSet.resize(totalWidth, totalHeight);
+  
+  // Создаем финальную группу из всех аннотаций
+  if (annotationsFolder && annotationsFolder.createFinalGroup) {
+    setTimeout(() => {
+      annotationsFolder.createFinalGroup();
+    }, 100); // Небольшая задержка для завершения создания всех аннотаций
+  }
 }
 
 // Отслеживание изменения выделения
