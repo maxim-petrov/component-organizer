@@ -153,7 +153,7 @@ async function createVariantAnnotation(text, x, y) {
 }
 
 // Функция для создания аннотации группы
-async function createGroupAnnotation(text, x, y, width = 100) {
+async function createGroupAnnotation(text, x, y) {
   // Создаем рамку для фона
   const backgroundFrame = figma.createFrame();
   backgroundFrame.name = `Group Label: ${text}`;
@@ -192,12 +192,12 @@ async function createGroupAnnotation(text, x, y, width = 100) {
   // Добавляем текст в рамку
   backgroundFrame.appendChild(textNode);
   
-  // Устанавливаем размер рамки на основе текста с отступами
+  // Устанавливаем размер рамки на основе текста с отступами (hug content)
   const padding = 16; // Отступы внутри лейбла
   const textWidth = textNode.width;
   const textHeight = textNode.height;
   
-  backgroundFrame.resize(Math.max(width, textWidth + padding * 2), textHeight + padding);
+  backgroundFrame.resize(textWidth + padding * 2, textHeight + padding);
   
   // Центрируем текст в рамке
   textNode.x = (backgroundFrame.width - textWidth) / 2;
@@ -428,8 +428,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             createGroupAnnotation(
               columnKey, 
               columnX, 
-              currentRowY - 45,
-              maxWidth
+              currentRowY - 45
             ).then(annotation => {
               annotation.name = `annotation-column-${columnKey}`;
               annotationsFolder.appendChild(annotation);
@@ -463,8 +462,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           createGroupAnnotation(
             groupKey,
             currentGroupX,
-            currentRowY - 75,
-            groupWidth
+            currentRowY - 75
           ).then(annotation => {
             annotation.name = `annotation-group-${groupKey}`;
             annotationsFolder.appendChild(annotation);
@@ -479,8 +477,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           createGroupAnnotation(
             groupKey,
             currentGroupX,
-            currentColumnY - 45,
-            maxWidth
+            currentColumnY - 45
           ).then(annotation => {
             annotation.name = `annotation-group-${groupKey}`;
             annotationsFolder.appendChild(annotation);
@@ -495,8 +492,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             createGroupAnnotation(
               columnKey,
               currentGroupX,
-              currentColumnY - 25,
-              maxWidth
+              currentColumnY - 25
             ).then(annotation => {
               annotation.name = `annotation-column-${columnKey}`;
               annotationsFolder.appendChild(annotation);
