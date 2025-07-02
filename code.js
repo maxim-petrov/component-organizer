@@ -248,6 +248,7 @@ function createAnnotationLine(startX, startY, endX, endY, annotationsFolder) {
   line.strokeWeight = 2; // Толщина линии в пикселях
   line.strokeCap = "ROUND"; // Закругленные концы
   line.strokeJoin = "ROUND"; // Закругленные соединения
+  line.cornerRadius = 6; // Скругление углов на загибах
   line.fills = []; // Убираем заливку
   
   // Добавляем в папку аннотаций
