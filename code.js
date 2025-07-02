@@ -380,7 +380,7 @@ function alignComponentVariants(
       figma.notify(`Создано ${groupCount} групп (${rows} строк по ${groupsPerRow} макс.) с ${totalColumns} максимум колонок в группе, направление: ${directionText}`);
     } else {
      // Простая сетка без группировки
-     setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations);
+     setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection);
      figma.notify(`Варианты выровнены в простую сетку`);
    }
 
@@ -477,7 +477,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
       let groupWidth;
       
       if (columnDirection === 'horizontal') {
-        // Горизонтальное расположение колонок
+        // Горизонтальное расположение колонок - аннотации сверху
         columnKeys.forEach((columnKey, columnIndex) => {
           const columnVariants = group[columnKey];
           const columnX = currentGroupX + columnIndex * (maxWidth + columnSpacing);
@@ -499,13 +499,13 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             variant.x = columnX;
             variant.y = currentRowY + itemIndex * (maxHeight + spacing);
             
-            // Создаем аннотацию для варианта слева (если включены аннотации)
+            // Создаем аннотацию для варианта сверху (если включены аннотации)
             if (showAnnotations && annotationsFolder) {
               const variantName = variant.name || `Variant ${itemIndex + 1}`;
               createVariantAnnotation(
                 variantName,
-                columnX - 10,
-                variant.y + maxHeight / 2 - 9
+                columnX + maxWidth / 2,
+                variant.y - 25
               ).then(annotation => {
                 annotation.name = `annotation-variant-${variant.id}`;
                 annotationsFolder.appendChild(annotation);
@@ -528,15 +528,15 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           });
         }
       } else {
-        // Вертикальное расположение колонок
+        // Вертикальное расположение колонок - аннотации слева
         let currentColumnY = currentRowY;
         
-        // Создаем аннотацию для группы сверху (если включены аннотации и есть название группы)
+        // Создаем аннотацию для группы слева (если включены аннотации и есть название группы)
         if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
           createGroupAnnotation(
             groupKey,
-            currentGroupX,
-            currentColumnY - 45
+            currentGroupX - 120,
+            currentColumnY + 10
           ).then(annotation => {
             annotation.name = `annotation-group-${groupKey}`;
             annotationsFolder.appendChild(annotation);
@@ -546,12 +546,12 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
         columnKeys.forEach((columnKey, columnIndex) => {
           const columnVariants = group[columnKey];
           
-          // Создаем аннотацию для колонки сверху (если включены аннотации и есть название колонки)
+          // Создаем аннотацию для колонки слева (если включены аннотации и есть название колонки)
           if (showAnnotations && columnKey !== 'default' && annotationsFolder) {
             createGroupAnnotation(
               columnKey,
-              currentGroupX,
-              currentColumnY - 25
+              currentGroupX - 80,
+              currentColumnY + 5
             ).then(annotation => {
               annotation.name = `annotation-column-${columnKey}`;
               annotationsFolder.appendChild(annotation);
@@ -612,7 +612,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
 }
 
 // Функция для создания простого Grid layout (резервная)
-function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations) {
+function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection = 'horizontal') {
   const parentNode = componentSet.parent;
   const componentSetX = componentSet.x;
   const componentSetY = componentSet.y;
@@ -636,17 +636,31 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
     variant.x = padding;
     variant.y = padding + index * (maxHeight + spacing);
     
-    // Создаем аннотацию для варианта слева (если включены аннотации)
+    // Создаем аннотацию для варианта в зависимости от направления (если включены аннотации)
     if (showAnnotations && annotationsFolder) {
       const variantName = variant.name || `Variant ${index + 1}`;
-      createVariantAnnotation(
-        variantName,
-        padding - 10,
-        variant.y + maxHeight / 2 - 9
-      ).then(annotation => {
-        annotation.name = `annotation-variant-${variant.id}`;
-        annotationsFolder.appendChild(annotation);
-      });
+      
+      if (columnDirection === 'horizontal') {
+        // Для горизонтального направления - аннотации сверху
+        createVariantAnnotation(
+          variantName,
+          padding + maxWidth / 2,
+          variant.y - 25
+        ).then(annotation => {
+          annotation.name = `annotation-variant-${variant.id}`;
+          annotationsFolder.appendChild(annotation);
+        });
+      } else {
+        // Для вертикального направления - аннотации слева
+        createVariantAnnotation(
+          variantName,
+          padding - 10,
+          variant.y + maxHeight / 2 - 9
+        ).then(annotation => {
+          annotation.name = `annotation-variant-${variant.id}`;
+          annotationsFolder.appendChild(annotation);
+        });
+      }
     }
   });
   
