@@ -213,21 +213,32 @@ async function createVariantAnnotation(text, x, y) {
 
 // Функция для создания линии аннотации
 function createAnnotationLine(startX, startY, endX, endY, annotationsFolder) {
-  const line = figma.createLine();
+  const line = figma.createRectangle();
   
   // Настраиваем внешний вид линии
-  line.strokes = [{ 
+  line.fills = [{ 
     type: 'SOLID', 
     color: { r: 0.482, g: 0.161, b: 0.898 }, // #7B29E5
-    opacity: 0.6 
+    opacity: 0.3 
   }];
-  line.strokeWeight = 1;
-  line.strokeCap = 'ROUND';
+  line.strokes = []; // Убираем обводку
+  line.cornerRadius = 0.5; // Слегка скругляем углы для красоты
   
-  // Устанавливаем позицию и размер
-  line.x = Math.min(startX, endX);
-  line.y = Math.min(startY, endY);
-  line.resize(Math.abs(endX - startX) || 1, Math.abs(endY - startY) || 1);
+  // Определяем направление и размеры
+  const isHorizontal = Math.abs(endX - startX) > Math.abs(endY - startY);
+  const lineThickness = 2; // Толщина линии в пикселях
+  
+  if (isHorizontal) {
+    // Горизонтальная линия
+    line.x = Math.min(startX, endX);
+    line.y = startY - lineThickness / 2;
+    line.resize(Math.abs(endX - startX), lineThickness);
+  } else {
+    // Вертикальная линия
+    line.x = startX - lineThickness / 2;
+    line.y = Math.min(startY, endY);
+    line.resize(lineThickness, Math.abs(endY - startY));
+  }
   
   // Добавляем в папку аннотаций
   if (annotationsFolder) {
