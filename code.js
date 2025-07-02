@@ -204,6 +204,10 @@ async function createVariantAnnotation(text, x, y) {
   textNode.textAlignHorizontal = 'RIGHT';
   textNode.characters = text;
   
+  // Ограничиваем ширину текста до 100px с переносом строк
+  textNode.textAutoResize = 'HEIGHT';
+  textNode.resize(100, textNode.height);
+  
   // Позиционируем аннотацию
   textNode.x = x;
   textNode.y = y;
@@ -284,6 +288,10 @@ async function createGroupAnnotation(text, x, y) {
   textNode.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }]; // #FFF
   textNode.textAlignHorizontal = 'CENTER';
   textNode.characters = text;
+  
+  // Ограничиваем ширину текста до 100px с переносом строк
+  textNode.textAutoResize = 'HEIGHT';
+  textNode.resize(100, textNode.height);
   
   // Добавляем текст в рамку
   backgroundFrame.appendChild(textNode);
