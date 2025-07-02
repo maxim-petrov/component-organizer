@@ -577,16 +577,18 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             // Центрируем аннотацию относительно своей ширины
             annotation.x = groupCenterX - annotation.width / 2;
             annotationsFolder.appendChild(annotation);
+            
+            // Создаем горизонтальную линию под аннотацией от начала до конца группы
+            // Центрируем линию по вертикали относительно аннотации
+            const lineCenterY = annotationY + annotation.height / 2;
+            createAnnotationLine(
+              currentGroupX,
+              lineCenterY,
+              currentGroupX + groupWidth,
+              lineCenterY,
+              annotationsFolder
+            );
           });
-          
-          // Создаем горизонтальную линию под аннотацией от начала до конца группы
-          createAnnotationLine(
-            currentGroupX,
-            componentSet.y - 45, // Линия между уровнями аннотаций
-            currentGroupX + groupWidth,
-            componentSet.y - 45,
-            annotationsFolder
-          );
         }
       } else {
         // Вертикальное расположение колонок - аннотации слева
@@ -622,16 +624,18 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
              // Центрируем аннотацию относительно своей высоты
              annotation.y = groupCenterY - annotation.height / 2;
              annotationsFolder.appendChild(annotation);
+             
+             // Создаем вертикальную линию справа от аннотации от начала до конца группы
+             // Центрируем линию по горизонтали относительно аннотации
+             const lineCenterX = annotationX + annotation.width / 2;
+             createAnnotationLine(
+               lineCenterX,
+               groupStartY,
+               lineCenterX,
+               groupStartY + totalGroupHeight,
+               annotationsFolder
+             );
            });
-           
-           // Создаем вертикальную линию справа от аннотации от начала до конца группы
-           createAnnotationLine(
-             componentSet.x - 40, // Линия между уровнями аннотаций
-             groupStartY,
-             componentSet.x - 40,
-             groupStartY + totalGroupHeight,
-             annotationsFolder
-           );
          }
          
          columnKeys.forEach((columnKey, columnIndex) => {
