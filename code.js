@@ -297,9 +297,14 @@ async function createGroupAnnotation(text, x, y) {
   textNode.textAlignHorizontal = 'CENTER';
   textNode.characters = text;
   
-  // Ограничиваем ширину текста до 100px с переносом строк
-  textNode.textAutoResize = 'HEIGHT';
-  textNode.resize(100, textNode.height);
+  // Устанавливаем auto width с максимальной шириной 100px
+  textNode.textAutoResize = 'WIDTH_AND_HEIGHT';
+  
+  // Если ширина превышает 100px, ограничиваем ее с переносом строк
+  if (textNode.width > 100) {
+    textNode.textAutoResize = 'HEIGHT';
+    textNode.resize(100, textNode.height);
+  }
   
   // Добавляем текст в рамку - AutoLayout автоматически центрирует
   backgroundFrame.appendChild(textNode);
