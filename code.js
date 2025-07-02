@@ -598,14 +598,14 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             annotation.x = groupCenterX - annotation.width / 2;
             annotationsFolder.appendChild(annotation);
             
-            // Создаем горизонтальную линию от аннотации до ComponentSet
-            // Позиционируем линию между аннотацией и ComponentSet
-            const lineY = annotationY + annotation.height + annotationSpacing / 2; // Между аннотацией и ComponentSet
+            // Создаем горизонтальную линию под аннотацией от начала до конца группы
+            // Центрируем линию по вертикали относительно аннотации
+            const lineCenterY = annotationY + annotation.height / 2;
             createAnnotationLine(
               currentGroupX,
-              lineY,
+              lineCenterY,
               currentGroupX + groupWidth,
-              lineY,
+              lineCenterY,
               annotationsFolder
             );
           });
@@ -656,16 +656,13 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
              annotation.y = groupCenterY - annotation.height / 2;
              annotationsFolder.appendChild(annotation);
              
-             // Создаем вертикальную линию от аннотации до ComponentSet
+             // Создаем вертикальную линию справа от аннотации от начала до конца группы
              // Центрируем линию по горизонтали относительно аннотации
              const lineCenterX = annotationX + annotation.width / 2;
-             const lineStartX = annotationX + annotation.width; // Правый край аннотации
-             const lineEndX = componentSet.x - annotationSpacing / 2; // Середина между аннотацией и ComponentSet
-             
              createAnnotationLine(
-               lineEndX,
+               lineCenterX,
                groupStartY,
-               lineEndX,
+               lineCenterX,
                groupStartY + totalGroupHeight,
                annotationsFolder
              );
