@@ -382,7 +382,8 @@ function alignComponentVariants(
   columnDirection = 'horizontal',
   groupProperties = [], 
   columnProperty = null,
-  showAnnotations = false
+  showAnnotations = false,
+  annotationSpacing = 24
 ) {
   if (!componentSet || componentSet.type !== 'COMPONENT_SET') {
     figma.notify('Выберите набор компонентов (Component Set)');
@@ -414,7 +415,7 @@ function alignComponentVariants(
     if (groupProperties.length > 0 || columnProperty) {
       // Многоуровневая группировка
       const groups = createMultiLevelGroups(variants, groupProperties, columnProperty);
-      setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations);
+      setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing);
       
       const groupCount = Object.keys(groups).length;
       const totalColumns = Object.values(groups).reduce((max, group) => 
@@ -425,7 +426,7 @@ function alignComponentVariants(
       figma.notify(`Создано ${groupCount} групп (${rows} строк по ${groupsPerRow} макс.) с ${totalColumns} максимум колонок в группе, направление: ${directionText}`);
     } else {
      // Простая сетка без группировки
-     setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection);
+     setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection, annotationSpacing);
      figma.notify(`Варианты выровнены в простую сетку`);
    }
 
@@ -436,7 +437,7 @@ function alignComponentVariants(
 }
 
 // Функция для создания многоуровневого Grid layout
-function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations) {
+function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing = 24) {
   const parentNode = componentSet.parent;
   const componentSetX = componentSet.x;
   const componentSetY = componentSet.y;
@@ -532,7 +533,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             createGroupAnnotation(
               columnKey, 
               columnX, 
-              componentSet.y - 50 // Позиционируем на среднем уровне (уровень 2)
+              componentSet.y - annotationSpacing * 2 // Позиционируем на среднем уровне (уровень 2)
             ).then(annotation => {
               annotation.name = `annotation-column-${columnKey}`;
               annotationsFolder.appendChild(annotation);
@@ -550,7 +551,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
               createVariantAnnotation(
                 variantName,
                 columnX + maxWidth / 2,
-                componentSet.y - 20 // Позиционируем ближе к компоненту (уровень 3 - самый специфичный)
+                componentSet.y - annotationSpacing // Позиционируем ближе к компоненту (уровень 3 - самый специфичный)
               ).then(annotation => {
                 annotation.name = `annotation-variant-${variant.id}`;
                 annotationsFolder.appendChild(annotation);
@@ -564,8 +565,8 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
         // Создаем аннотацию для группы сверху по центру (если включены аннотации и есть название группы)
         if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
           const groupCenterX = currentGroupX + groupWidth / 2;
-          // Позиционируем аннотацию выше ComponentSet с большим отступом (уровень 1 - самый общий)
-          const annotationY = componentSet.y - 80;
+          // Позиционируем аннотацию выше ComponentSet (уровень 1 - самый общий)
+          const annotationY = componentSet.y - annotationSpacing * 3;
           
           // Создаем аннотацию по центру группы
           createGroupAnnotation(
@@ -611,8 +612,8 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
          // Создаем аннотацию для группы слева по центру (если включены аннотации и есть название группы)
          if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
            const groupCenterY = groupStartY + totalGroupHeight / 2;
-           // Позиционируем аннотацию левее ComponentSet с большим отступом (уровень 1 - самый общий)
-           const annotationX = componentSet.x - 140;
+           // Позиционируем аннотацию левее ComponentSet (уровень 1 - самый общий)
+           const annotationX = componentSet.x - annotationSpacing * 3;
            
            // Создаем аннотацию по центру группы
            createGroupAnnotation(
@@ -645,7 +646,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           if (showAnnotations && columnKey !== 'default' && annotationsFolder) {
             createGroupAnnotation(
               columnKey,
-              componentSet.x - 100, // Позиционируем на среднем уровне (уровень 2)
+              componentSet.x - annotationSpacing * 2, // Позиционируем на среднем уровне (уровень 2)
               currentColumnY + 5
             ).then(annotation => {
               annotation.name = `annotation-column-${columnKey}`;
@@ -663,7 +664,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
               const variantName = variant.name || `Variant ${itemIndex + 1}`;
               createVariantAnnotation(
                 variantName,
-                componentSet.x - 20, // Позиционируем ближе к компоненту (уровень 3 - самый специфичный)
+                componentSet.x - annotationSpacing, // Позиционируем ближе к компоненту (уровень 3 - самый специфичный)
                 variant.y + maxHeight / 2 - 9
               ).then(annotation => {
                 annotation.name = `annotation-variant-${variant.id}`;
@@ -707,7 +708,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
 }
 
 // Функция для создания простого Grid layout (резервная)
-function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection = 'horizontal') {
+function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection = 'horizontal', annotationSpacing = 24) {
   const parentNode = componentSet.parent;
   const componentSetX = componentSet.x;
   const componentSetY = componentSet.y;
@@ -740,7 +741,7 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
         createVariantAnnotation(
           variantName,
           padding + maxWidth / 2,
-          componentSet.y - 20 // Позиционируем ближе к компоненту (уровень 3 - самый специфичный)
+          componentSet.y - annotationSpacing // Позиционируем ближе к компоненту (уровень 3 - самый специфичный)
         ).then(annotation => {
           annotation.name = `annotation-variant-${variant.id}`;
           annotationsFolder.appendChild(annotation);
@@ -749,7 +750,7 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
         // Для вертикального направления - аннотации слева
         createVariantAnnotation(
           variantName,
-          componentSet.x - 20, // Позиционируем ближе к компоненту (уровень 3 - самый специфичный)
+          componentSet.x - annotationSpacing, // Позиционируем ближе к компоненту (уровень 3 - самый специфичный)
           variant.y + maxHeight / 2 - 9
         ).then(annotation => {
           annotation.name = `annotation-variant-${variant.id}`;
@@ -793,7 +794,8 @@ figma.ui.onmessage = (msg) => {
       columnDirection: msg.columnDirection || 'horizontal',
       groupProperties: msg.groupProperties || [],
       columnProperty: msg.columnProperty || null,
-      showAnnotations: msg.showAnnotations || false
+      showAnnotations: msg.showAnnotations || false,
+      annotationSpacing: msg.annotationSpacing || 24
     };
 
     // Сохраняем настройки перед применением
@@ -809,7 +811,8 @@ figma.ui.onmessage = (msg) => {
       settings.columnDirection,
       settings.groupProperties, 
       settings.columnProperty,
-      settings.showAnnotations
+      settings.showAnnotations,
+      settings.annotationSpacing
     );
   }
   

@@ -368,6 +368,20 @@
       </div>
       
       <div class="setting-group">
+        <label class="setting-label" for="annotation-spacing-input">Отступ между уровнями аннотаций (px):</label>
+        <input 
+          type="number" 
+          id="annotation-spacing-input" 
+          class="setting-input" 
+          value="24" 
+          min="8" 
+          max="50"
+          placeholder="24"
+        >
+        <div class="group-info">Расстояние между уровнями иерархии аннотаций</div>
+      </div>
+      
+      <div class="setting-group">
         <label class="setting-label">Направление колонок внутри групп:</label>
         <div class="radio-group">
           <label class="radio-option">
@@ -439,6 +453,7 @@
       document.getElementById('group-spacing-input').value = settings.groupSpacing || 80;
       document.getElementById('groups-per-row-input').value = settings.groupsPerRow || 3;
       document.getElementById('show-annotations-checkbox').checked = settings.showAnnotations !== false;
+      document.getElementById('annotation-spacing-input').value = settings.annotationSpacing || 24;
       
       // Загружаем направление колонок
       const columnDirectionRadios = document.querySelectorAll('input[name="column-direction"]');
@@ -606,6 +621,7 @@
       const groupProperties = getSelectedGroupProperties();
       const columnProperty = document.getElementById('column-property-select').value;
       const showAnnotations = document.getElementById('show-annotations-checkbox').checked;
+      const annotationSpacing = parseInt(document.getElementById('annotation-spacing-input').value) || 24;
       
       parent.postMessage({ 
         pluginMessage: { 
@@ -618,7 +634,8 @@
           columnDirection: columnDirection,
           groupProperties: groupProperties,
           columnProperty: columnProperty === 'none' ? null : columnProperty,
-          showAnnotations: showAnnotations
+          showAnnotations: showAnnotations,
+          annotationSpacing: annotationSpacing
         } 
       }, '*');
     });
@@ -651,6 +668,9 @@
         } else if (e.target.id === 'groups-per-row-input') {
           if (value < 1) e.target.value = 1;
           if (value > 10) e.target.value = 10;
+        } else if (e.target.id === 'annotation-spacing-input') {
+          if (value < 8) e.target.value = 8;
+          if (value > 50) e.target.value = 50;
         } else {
           if (value < 0) e.target.value = 0;
           if (value > 200) e.target.value = 200;
