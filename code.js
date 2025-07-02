@@ -260,6 +260,8 @@ async function createGroupAnnotation(text, x, y) {
   backgroundFrame.layoutMode = 'HORIZONTAL';
   backgroundFrame.primaryAxisAlignItems = 'CENTER';
   backgroundFrame.counterAxisAlignItems = 'CENTER';
+  backgroundFrame.primaryAxisSizingMode = 'AUTO'; // hug content по ширине
+  backgroundFrame.counterAxisSizingMode = 'AUTO'; // hug content по высоте
   backgroundFrame.paddingLeft = 16;
   backgroundFrame.paddingRight = 16;
   backgroundFrame.paddingTop = 8;
@@ -526,7 +528,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           // Создаем аннотацию для колонки сверху (если включены аннотации и есть название колонки)
           if (showAnnotations && columnKey !== 'default' && annotationsFolder) {
             // Рассчитываем позицию уровня 2 с учетом размера рамок аннотаций уровня 3
-            const variantAnnotationHeight = 34; // высота рамки аннотации
+            const variantAnnotationHeight = 34; // примерная высота рамки (hug content адаптируется)
             const level3Y = componentSet.y - annotationSpacing;
             const level2Y = level3Y - variantAnnotationHeight - annotationSpacing;
             
@@ -569,10 +571,10 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
         if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
           const groupCenterX = currentGroupX + groupWidth / 2;
           // Рассчитываем позицию с учетом размеров рамок аннотаций нижних уровней
-          // Уровень 3 (варианты): текст ~18px + padding 16px = ~34px высота + маржин
-          // Уровень 2 (колонки): текст ~18px + padding 16px = ~34px высота + маржин  
+          // Уровень 3 (варианты): текст ~18px + padding 16px = ~34px высота (hug content) + маржин
+          // Уровень 2 (колонки): текст ~18px + padding 16px = ~34px высота (hug content) + маржин  
           // Уровень 1 (группы): позиция
-          const variantAnnotationHeight = 34; // текст 18px + верхний padding 8px + нижний padding 8px
+          const variantAnnotationHeight = 34; // примерная высота для одной строки (hug content адаптируется)
           const columnAnnotationHeight = 34;
           const groupAnnotationHeight = 34;
           
@@ -627,10 +629,10 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
          if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
            const groupCenterY = groupStartY + totalGroupHeight / 2;
            // Рассчитываем позицию с учетом размеров рамок аннотаций правых уровней
-           // Уровень 3 (варианты): текст 100px + padding 32px = ~132px ширина + маржин
-           // Уровень 2 (колонки): текст 100px + padding 32px = ~132px ширина + маржин  
+           // Уровень 3 (варианты): текст 100px + padding 32px = ~132px ширина (hug content) + маржин
+           // Уровень 2 (колонки): текст 100px + padding 32px = ~132px ширина (hug content) + маржин  
            // Уровень 1 (группы): позиция
-           const variantAnnotationWidth = 132; // текст 100px + левый padding 16px + правый padding 16px
+           const variantAnnotationWidth = 132; // примерная ширина (hug content адаптируется)
            const columnAnnotationWidth = 132;
            const groupAnnotationWidth = 132;
            
@@ -670,7 +672,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           // Создаем аннотацию для колонки слева (если включены аннотации и есть название колонки)
           if (showAnnotations && columnKey !== 'default' && annotationsFolder) {
             // Рассчитываем позицию уровня 2 с учетом размера рамок аннотаций уровня 3
-            const variantAnnotationWidth = 132; // ширина рамки аннотации
+            const variantAnnotationWidth = 132; // примерная ширина рамки (hug content адаптируется)
             const level3X = componentSet.x - annotationSpacing;
             const level2X = level3X - variantAnnotationWidth - annotationSpacing;
             
