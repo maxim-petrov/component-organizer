@@ -551,7 +551,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             // Рассчитываем позицию уровня 2 с правильными отступами 24px
             const variantAnnotationHeight = 25; // примерная высота рамки (hug content адаптируется)
             const columnAnnotationHeight = 25;
-            const level3Y = componentSet.y - annotationSpacing - variantAnnotationHeight; // позиция ВЕРХНЕЙ границы аннотации варианта
+            const level3Y = componentSetY - annotationSpacing - variantAnnotationHeight; // позиция ВЕРХНЕЙ границы аннотации варианта
             const level2Y = level3Y - annotationSpacing - columnAnnotationHeight; // позиция ВЕРХНЕЙ границы аннотации колонки
             
             createGroupAnnotation(
@@ -574,7 +574,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
               const variantName = variant.name || `Variant ${itemIndex + 1}`;
               // Уровень 3 - самый близкий к компоненту, отступ 24px от компонента
               const variantAnnotationHeight = 25;
-              const level3Y = componentSet.y - annotationSpacing - variantAnnotationHeight;
+              const level3Y = componentSetY - annotationSpacing - variantAnnotationHeight;
               
               createVariantAnnotation(
                 variantName,
@@ -600,7 +600,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           const variantAnnotationHeight = 25; // примерная высота для одной строки (hug content адаптируется)
           const columnAnnotationHeight = 25;
           
-          const level3Y = componentSet.y - annotationSpacing - variantAnnotationHeight; // позиция ВЕРХНЕЙ границы аннотации варианта
+          const level3Y = componentSetY - annotationSpacing - variantAnnotationHeight; // позиция ВЕРХНЕЙ границы аннотации варианта
           const level2Y = level3Y - annotationSpacing - columnAnnotationHeight; // позиция ВЕРХНЕЙ границы аннотации колонки  
           const level1Y = level2Y - annotationSpacing - columnAnnotationHeight; // позиция ВЕРХНЕЙ границы аннотации группы
           
@@ -657,7 +657,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
            const variantAnnotationWidth = 116; // примерная ширина (hug content адаптируется)
            const columnAnnotationWidth = 116;
            
-           const level3X = componentSet.x - annotationSpacing - variantAnnotationWidth; // позиция ЛЕВОЙ границы аннотации варианта
+           const level3X = componentSetX - annotationSpacing - variantAnnotationWidth; // позиция ЛЕВОЙ границы аннотации варианта
            const level2X = level3X - annotationSpacing - columnAnnotationWidth; // позиция ЛЕВОЙ границы аннотации колонки
            const level1X = level2X - annotationSpacing - columnAnnotationWidth; // позиция ЛЕВОЙ границы аннотации группы
            
@@ -695,7 +695,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             // Рассчитываем позицию уровня 2 с правильными отступами 24px
             const variantAnnotationWidth = 116; // примерная ширина рамки (hug content адаптируется)
             const columnAnnotationWidth = 116;
-            const level3X = componentSet.x - annotationSpacing - variantAnnotationWidth; // позиция ЛЕВОЙ границы аннотации варианта
+            const level3X = componentSetX - annotationSpacing - variantAnnotationWidth; // позиция ЛЕВОЙ границы аннотации варианта
             const level2X = level3X - annotationSpacing - columnAnnotationWidth; // позиция ЛЕВОЙ границы аннотации колонки
             
             createGroupAnnotation(
@@ -718,7 +718,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
               const variantName = variant.name || `Variant ${itemIndex + 1}`;
               // Уровень 3 - самый близкий к компоненту, отступ 24px от компонента
               const variantAnnotationWidth = 116;
-              const level3X = componentSet.x - annotationSpacing - variantAnnotationWidth;
+              const level3X = componentSetX - annotationSpacing - variantAnnotationWidth;
               
               createVariantAnnotation(
                 variantName,
@@ -805,7 +805,7 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
         // Для горизонтального направления - аннотации сверху
         // Уровень 3 - единственный уровень в простом layout, отступ 24px от компонента
         const variantAnnotationHeight = 25;
-        const level3Y = componentSet.y - annotationSpacing - variantAnnotationHeight;
+        const level3Y = componentSetY - annotationSpacing - variantAnnotationHeight;
         
         createVariantAnnotation(
           variantName,
@@ -819,7 +819,7 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
         // Для вертикального направления - аннотации слева
         // Уровень 3 - единственный уровень в простом layout, отступ 24px от компонента
         const variantAnnotationWidth = 116;
-        const level3X = componentSet.x - annotationSpacing - variantAnnotationWidth;
+        const level3X = componentSetX - annotationSpacing - variantAnnotationWidth;
         
         createVariantAnnotation(
           variantName,
