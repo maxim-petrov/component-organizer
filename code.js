@@ -251,9 +251,9 @@ function createAnnotationLine(startX, startY, endX, endY, annotationsFolder) {
   line.cornerRadius = 6; // Скругление углов на загибах
   line.fills = []; // Убираем заливку
   
-  // Добавляем в папку аннотаций
+  // Добавляем в папку аннотаций (в самый низ стека слоев)
   if (annotationsFolder) {
-    annotationsFolder.appendChild(line);
+    annotationsFolder.insertChild(0, line);
   }
   
   return line;
