@@ -211,6 +211,32 @@ async function createVariantAnnotation(text, x, y) {
   return textNode;
 }
 
+// Функция для создания линии аннотации
+function createAnnotationLine(startX, startY, endX, endY, annotationsFolder) {
+  const line = figma.createLine();
+  
+  // Настраиваем внешний вид линии
+  line.strokes = [{ 
+    type: 'SOLID', 
+    color: { r: 0.482, g: 0.161, b: 0.898 }, // #7B29E5
+    opacity: 0.6 
+  }];
+  line.strokeWeight = 1;
+  line.strokeCap = 'ROUND';
+  
+  // Устанавливаем позицию и размер
+  line.x = Math.min(startX, endX);
+  line.y = Math.min(startY, endY);
+  line.resize(Math.abs(endX - startX) || 1, Math.abs(endY - startY) || 1);
+  
+  // Добавляем в папку аннотаций
+  if (annotationsFolder) {
+    annotationsFolder.appendChild(line);
+  }
+  
+  return line;
+}
+
 // Функция для создания аннотации группы
 async function createGroupAnnotation(text, x, y) {
   // Создаем рамку для фона
@@ -516,34 +542,78 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
         
         groupWidth = columnKeys.length * maxWidth + (columnKeys.length - 1) * columnSpacing;
         
-        // Создаем аннотацию для группы сверху (если включены аннотации и есть название группы)
+        // Создаем аннотацию для группы сверху по центру (если включены аннотации и есть название группы)
         if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
+          const groupCenterX = currentGroupX + groupWidth / 2;
+          const annotationY = currentRowY - 75;
+          
+          // Создаем аннотацию по центру группы
           createGroupAnnotation(
             groupKey,
-            currentGroupX,
-            currentRowY - 75
+            groupCenterX,
+            annotationY
           ).then(annotation => {
             annotation.name = `annotation-group-${groupKey}`;
+            // Центрируем аннотацию относительно своей ширины
+            annotation.x = groupCenterX - annotation.width / 2;
             annotationsFolder.appendChild(annotation);
           });
+          
+          // Создаем горизонтальную линию под аннотацией от начала до конца группы
+          createAnnotationLine(
+            currentGroupX,
+            annotationY + 35, // Немного ниже аннотации
+            currentGroupX + groupWidth,
+            annotationY + 35,
+            annotationsFolder
+          );
         }
       } else {
         // Вертикальное расположение колонок - аннотации слева
         let currentColumnY = currentRowY;
+        const groupStartY = currentColumnY;
         
-        // Создаем аннотацию для группы слева (если включены аннотации и есть название группы)
-        if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
-          createGroupAnnotation(
-            groupKey,
-            currentGroupX - 120,
-            currentColumnY + 10
-          ).then(annotation => {
-            annotation.name = `annotation-group-${groupKey}`;
-            annotationsFolder.appendChild(annotation);
-          });
-        }
-        
-        columnKeys.forEach((columnKey, columnIndex) => {
+                 // Сначала рассчитываем общую высоту группы
+         let totalGroupHeight = 0;
+         columnKeys.forEach((columnKey, columnIndex) => {
+           const columnVariants = group[columnKey];
+           const columnHeight = columnVariants.length * maxHeight + (columnVariants.length - 1) * spacing;
+           totalGroupHeight += columnHeight;
+           
+           // Добавляем отступ между колонками (кроме последней)
+           if (columnIndex < columnKeys.length - 1) {
+             totalGroupHeight += columnSpacing;
+           }
+         });
+         
+         // Создаем аннотацию для группы слева по центру (если включены аннотации и есть название группы)
+         if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
+           const groupCenterY = groupStartY + totalGroupHeight / 2;
+           const annotationX = currentGroupX - 120;
+           
+           // Создаем аннотацию по центру группы
+           createGroupAnnotation(
+             groupKey,
+             annotationX,
+             groupCenterY
+           ).then(annotation => {
+             annotation.name = `annotation-group-${groupKey}`;
+             // Центрируем аннотацию относительно своей высоты
+             annotation.y = groupCenterY - annotation.height / 2;
+             annotationsFolder.appendChild(annotation);
+           });
+           
+           // Создаем вертикальную линию справа от аннотации от начала до конца группы
+           createAnnotationLine(
+             annotationX + 100, // Справа от аннотации
+             groupStartY,
+             annotationX + 100,
+             groupStartY + totalGroupHeight,
+             annotationsFolder
+           );
+         }
+         
+         columnKeys.forEach((columnKey, columnIndex) => {
           const columnVariants = group[columnKey];
           
           // Создаем аннотацию для колонки слева (если включены аннотации и есть название колонки)
