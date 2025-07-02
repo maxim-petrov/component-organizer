@@ -36,6 +36,62 @@ function getComponentSetFromSelection() {
   return null;
 }
 
+// Функция для получения сохраненных настроек компонента
+function getComponentSettings(componentSet) {
+  const defaultSettings = {
+    padding: 40,
+    spacing: 20,
+    columnSpacing: 40,
+    groupSpacing: 80,
+    groupsPerRow: 3,
+    columnDirection: 'horizontal',
+    groupProperties: [],
+    columnProperty: null,
+    showAnnotations: true
+  };
+
+  if (!componentSet) {
+    return defaultSettings;
+  }
+
+  try {
+    const savedData = componentSet.getPluginData('alignmentSettings');
+    if (savedData) {
+      const parsedSettings = JSON.parse(savedData);
+      // Объединяем с настройками по умолчанию для обратной совместимости
+      return Object.assign({}, defaultSettings, parsedSettings);
+    }
+  } catch (error) {
+    console.log('Ошибка при загрузке настроек:', error);
+  }
+
+  return defaultSettings;
+}
+
+// Функция для сохранения настроек компонента
+function saveComponentSettings(componentSet, settings) {
+  if (!componentSet) return;
+  
+  try {
+    const settingsToSave = {
+      padding: settings.padding,
+      spacing: settings.spacing,
+      columnSpacing: settings.columnSpacing,
+      groupSpacing: settings.groupSpacing,
+      groupsPerRow: settings.groupsPerRow,
+      columnDirection: settings.columnDirection,
+      groupProperties: settings.groupProperties,
+      columnProperty: settings.columnProperty,
+      showAnnotations: settings.showAnnotations
+    };
+    
+    componentSet.setPluginData('alignmentSettings', JSON.stringify(settingsToSave));
+    console.log('Настройки сохранены для компонента:', componentSet.name);
+  } catch (error) {
+    console.log('Ошибка при сохранении настроек:', error);
+  }
+}
+
 // Функция для отправки информации о текущем выделении в UI
 function updateSelectionInfo() {
   const componentSet = getComponentSetFromSelection();
@@ -43,6 +99,7 @@ function updateSelectionInfo() {
   if (componentSet) {
     const properties = getVariantProperties(componentSet);
     const variantCount = componentSet.children.filter(child => child.type === 'COMPONENT').length;
+    const savedSettings = getComponentSettings(componentSet);
     
     figma.ui.postMessage({ 
       type: 'selection-updated', 
@@ -50,7 +107,8 @@ function updateSelectionInfo() {
         componentSetName: componentSet.name,
         properties: properties,
         variantCount: variantCount,
-        hasValidSelection: true
+        hasValidSelection: true,
+        savedSettings: savedSettings
       }
     });
   } else {
@@ -60,7 +118,8 @@ function updateSelectionInfo() {
         componentSetName: null,
         properties: [],
         variantCount: 0,
-        hasValidSelection: false
+        hasValidSelection: false,
+        savedSettings: null
       }
     });
   }
@@ -616,27 +675,32 @@ figma.ui.onmessage = (msg) => {
       return;
     }
 
-    const padding = msg.padding || 40;
-    const spacing = msg.spacing || 20;
-    const columnSpacing = msg.columnSpacing || 40;
-    const groupSpacing = msg.groupSpacing || 80;
-    const groupsPerRow = msg.groupsPerRow || 3;
-    const columnDirection = msg.columnDirection || 'horizontal';
-    const groupProperties = msg.groupProperties || [];
-    const columnProperty = msg.columnProperty || null;
-    const showAnnotations = msg.showAnnotations || false;
+    const settings = {
+      padding: msg.padding || 40,
+      spacing: msg.spacing || 20,
+      columnSpacing: msg.columnSpacing || 40,
+      groupSpacing: msg.groupSpacing || 80,
+      groupsPerRow: msg.groupsPerRow || 3,
+      columnDirection: msg.columnDirection || 'horizontal',
+      groupProperties: msg.groupProperties || [],
+      columnProperty: msg.columnProperty || null,
+      showAnnotations: msg.showAnnotations || false
+    };
+
+    // Сохраняем настройки перед применением
+    saveComponentSettings(componentSet, settings);
 
     alignComponentVariants(
       componentSet, 
-      padding, 
-      spacing, 
-      columnSpacing, 
-      groupSpacing, 
-      groupsPerRow,
-      columnDirection,
-      groupProperties, 
-      columnProperty,
-      showAnnotations
+      settings.padding, 
+      settings.spacing, 
+      settings.columnSpacing, 
+      settings.groupSpacing, 
+      settings.groupsPerRow,
+      settings.columnDirection,
+      settings.groupProperties, 
+      settings.columnProperty,
+      settings.showAnnotations
     );
   }
   
