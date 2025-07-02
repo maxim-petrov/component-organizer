@@ -226,11 +226,11 @@ function createAnnotationLine(startX, startY, endX, endY, annotationsFolder) {
   let pathData;
   
   if (isHorizontal) {
-    // Горизонтальная линия с загибами вниз в начале и конце
-    pathData = `M ${startX} ${startY - bendLength} L ${startX} ${startY} L ${endX} ${startY} L ${endX} ${startY + bendLength}`;
+    // Горизонтальная линия с загибами вниз в начале и конце (оба в сторону ComponentSet)
+    pathData = `M ${startX} ${startY + bendLength} L ${startX} ${startY} L ${endX} ${startY} L ${endX} ${startY + bendLength}`;
   } else {
-    // Вертикальная линия с загибами вправо в начале и конце  
-    pathData = `M ${startX - bendLength} ${startY} L ${startX} ${startY} L ${startX} ${endY} L ${startX + bendLength} ${endY}`;
+    // Вертикальная линия с загибами вправо в начале и конце (оба в сторону ComponentSet)  
+    pathData = `M ${startX + bendLength} ${startY} L ${startX} ${startY} L ${startX} ${endY} L ${startX + bendLength} ${endY}`;
   }
   
   // Создаем векторные пути
