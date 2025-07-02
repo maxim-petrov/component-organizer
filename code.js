@@ -524,7 +524,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             createGroupAnnotation(
               columnKey, 
               columnX, 
-              currentRowY - 45
+              componentSet.y - 30 // Позиционируем выше ComponentSet
             ).then(annotation => {
               annotation.name = `annotation-column-${columnKey}`;
               annotationsFolder.appendChild(annotation);
@@ -542,7 +542,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
               createVariantAnnotation(
                 variantName,
                 columnX + maxWidth / 2,
-                variant.y - 25
+                componentSet.y - 5 // Позиционируем выше ComponentSet
               ).then(annotation => {
                 annotation.name = `annotation-variant-${variant.id}`;
                 annotationsFolder.appendChild(annotation);
@@ -556,7 +556,8 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
         // Создаем аннотацию для группы сверху по центру (если включены аннотации и есть название группы)
         if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
           const groupCenterX = currentGroupX + groupWidth / 2;
-          const annotationY = currentRowY - 75;
+          // Позиционируем аннотацию выше ComponentSet с отступом
+          const annotationY = componentSet.y - 60;
           
           // Создаем аннотацию по центру группы
           createGroupAnnotation(
@@ -573,9 +574,9 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           // Создаем горизонтальную линию под аннотацией от начала до конца группы
           createAnnotationLine(
             currentGroupX,
-            annotationY + 35, // Немного ниже аннотации
+            componentSet.y - 25, // Линия ближе к ComponentSet, но все еще снаружи
             currentGroupX + groupWidth,
-            annotationY + 35,
+            componentSet.y - 25,
             annotationsFolder
           );
         }
@@ -600,7 +601,8 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
          // Создаем аннотацию для группы слева по центру (если включены аннотации и есть название группы)
          if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
            const groupCenterY = groupStartY + totalGroupHeight / 2;
-           const annotationX = currentGroupX - 120;
+           // Позиционируем аннотацию левее ComponentSet с отступом
+           const annotationX = componentSet.x - 120;
            
            // Создаем аннотацию по центру группы
            createGroupAnnotation(
@@ -616,9 +618,9 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
            
            // Создаем вертикальную линию справа от аннотации от начала до конца группы
            createAnnotationLine(
-             annotationX + 100, // Справа от аннотации
+             componentSet.x - 20, // Линия ближе к ComponentSet, но все еще снаружи
              groupStartY,
-             annotationX + 100,
+             componentSet.x - 20,
              groupStartY + totalGroupHeight,
              annotationsFolder
            );
@@ -631,7 +633,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           if (showAnnotations && columnKey !== 'default' && annotationsFolder) {
             createGroupAnnotation(
               columnKey,
-              currentGroupX - 80,
+              componentSet.x - 80, // Позиционируем левее ComponentSet
               currentColumnY + 5
             ).then(annotation => {
               annotation.name = `annotation-column-${columnKey}`;
@@ -649,7 +651,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
               const variantName = variant.name || `Variant ${itemIndex + 1}`;
               createVariantAnnotation(
                 variantName,
-                currentGroupX - 10,
+                componentSet.x - 10, // Позиционируем левее ComponentSet
                 variant.y + maxHeight / 2 - 9
               ).then(annotation => {
                 annotation.name = `annotation-variant-${variant.id}`;
@@ -726,7 +728,7 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
         createVariantAnnotation(
           variantName,
           padding + maxWidth / 2,
-          variant.y - 25
+          componentSet.y - 5 // Позиционируем выше ComponentSet
         ).then(annotation => {
           annotation.name = `annotation-variant-${variant.id}`;
           annotationsFolder.appendChild(annotation);
@@ -735,7 +737,7 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
         // Для вертикального направления - аннотации слева
         createVariantAnnotation(
           variantName,
-          padding - 10,
+          componentSet.x - 10, // Позиционируем левее ComponentSet
           variant.y + maxHeight / 2 - 9
         ).then(annotation => {
           annotation.name = `annotation-variant-${variant.id}`;
