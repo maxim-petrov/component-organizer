@@ -101,29 +101,77 @@ function createAnnotationsFolder(componentSet) {
   
   const annotationsFolderName = `${componentSet.name} annotations`;
   
-  // Создаем контейнер для сбора аннотаций
+  // Создаем контейнер для сбора аннотаций по уровням
   const annotationsContainer = {
     name: annotationsFolderName,
     parent: parentNode,
-    annotations: [],
+    level1Annotations: [], // колонки
+    level2Annotations: [], // группы
+    lines: [], // линии
     
-    appendChild: function(child) {
-      this.annotations.push(child);
-      this.parent.appendChild(child);
+    addLevel1Annotation: function(annotation) {
+      this.level1Annotations.push(annotation);
+      this.parent.appendChild(annotation);
     },
     
-    insertChild: function(index, child) {
-      this.annotations.splice(index, 0, child);
-      this.parent.appendChild(child);
+    addLevel2Annotation: function(annotation) {
+      this.level2Annotations.push(annotation);
+      this.parent.appendChild(annotation);
     },
     
-    // Метод для создания финальной группы из всех аннотаций
-    createFinalGroup: function() {
-      if (this.annotations.length > 0) {
-        const group = figma.group(this.annotations, this.parent);
-        group.name = this.name;
-        return group;
+    addLine: function(line) {
+      this.lines.push(line);
+      this.parent.appendChild(line);
+    },
+    
+    // Метод для создания финальной структуры папок из всех аннотаций
+    createFinalStructure: function(columnDirection, annotationSpacing = 24) {
+      if (this.level1Annotations.length === 0 && this.level2Annotations.length === 0) {
+        return null;
       }
+      
+      const allElements = [];
+      
+      // Создаем папки для каждого уровня только если есть аннотации этого уровня
+      if (this.level2Annotations.length > 0) {
+        const level2Folder = figma.group(this.level2Annotations.concat(this.lines), this.parent);
+        level2Folder.name = 'Level 2';
+        allElements.push(level2Folder);
+      }
+      
+      if (this.level1Annotations.length > 0) {
+        const level1Folder = figma.group(this.level1Annotations, this.parent);
+        level1Folder.name = 'Level 1';
+        allElements.push(level1Folder);
+      }
+      
+      // Создаем общий Frame с Auto Layout
+      if (allElements.length > 0) {
+        const mainFrame = figma.createFrame();
+        mainFrame.name = this.name;
+        mainFrame.fills = []; // Убираем фон
+        mainFrame.strokes = []; // Убираем границы
+        mainFrame.clipsContent = false;
+        
+        // Настраиваем Auto Layout
+        mainFrame.layoutMode = columnDirection === 'horizontal' ? 'VERTICAL' : 'HORIZONTAL';
+        mainFrame.itemSpacing = annotationSpacing;
+        mainFrame.primaryAxisAlignItems = 'MIN';
+        mainFrame.counterAxisAlignItems = 'MIN';
+        mainFrame.primaryAxisSizingMode = 'AUTO';
+        mainFrame.counterAxisSizingMode = 'AUTO';
+        
+        // Добавляем Frame в родительский узел
+        this.parent.appendChild(mainFrame);
+        
+        // Перемещаем все элементы в Frame
+        allElements.forEach(element => {
+          mainFrame.appendChild(element);
+        });
+        
+        return mainFrame;
+      }
+      
       return null;
     }
   };
@@ -169,9 +217,9 @@ function createAnnotationLine(startX, startY, endX, endY, annotationsFolder) {
   line.cornerRadius = 6; // Скругление углов на загибах
   line.fills = []; // Убираем заливку
   
-  // Добавляем в папку аннотаций (в самый низ стека слоев)
+  // Добавляем линию в папку аннотаций
   if (annotationsFolder) {
-    annotationsFolder.insertChild(0, line);
+    annotationsFolder.addLine(line);
   }
   
   return line;
@@ -473,7 +521,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
               level2Y // Позиционируем на среднем уровне (уровень 2)
             ).then(annotation => {
               annotation.name = `annotation-column-${columnKey}`;
-              annotationsFolder.appendChild(annotation);
+              annotationsFolder.addLevel1Annotation(annotation);
             });
             
             // Отмечаем, что аннотация для этой позиции уже создана
@@ -515,7 +563,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             annotation.name = `annotation-group-${groupKey}`;
             // Центрируем аннотацию относительно своей ширины
             annotation.x = groupCenterX - annotation.width / 2;
-            annotationsFolder.appendChild(annotation);
+            annotationsFolder.addLevel2Annotation(annotation);
             
             // Создаем горизонтальную линию под аннотацией от начала до конца группы
             // Центрируем линию по вертикали относительно аннотации
@@ -576,7 +624,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             annotation.name = `annotation-group-${groupKey}`;
             // Центрируем аннотацию относительно своей высоты
             annotation.y = groupCenterY - annotation.height / 2;
-            annotationsFolder.appendChild(annotation);
+            annotationsFolder.addLevel2Annotation(annotation);
             
             // Создаем вертикальную линию справа от аннотации от начала до конца группы
             // Центрируем линию по горизонтали относительно аннотации
@@ -611,7 +659,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
               currentColumnY + 5
             ).then(annotation => {
               annotation.name = `annotation-column-${columnKey}`;
-              annotationsFolder.appendChild(annotation);
+              annotationsFolder.addLevel1Annotation(annotation);
             });
             
             // Отмечаем, что аннотация для этой позиции уже создана
@@ -655,10 +703,10 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
   
   componentSet.resize(totalWidth, totalHeight);
   
-  // Создаем финальную группу из всех аннотаций
-  if (annotationsFolder && annotationsFolder.createFinalGroup) {
+  // Создаем финальную структуру из всех аннотаций
+  if (annotationsFolder && annotationsFolder.createFinalStructure) {
     setTimeout(() => {
-      annotationsFolder.createFinalGroup();
+      annotationsFolder.createFinalStructure(columnDirection, annotationSpacing);
     }, 100); // Небольшая задержка для завершения создания всех аннотаций
   }
   
@@ -703,10 +751,10 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
   
   componentSet.resize(totalWidth, totalHeight);
   
-  // Создаем финальную группу из всех аннотаций
-  if (annotationsFolder && annotationsFolder.createFinalGroup) {
+  // Создаем финальную структуру из всех аннотаций
+  if (annotationsFolder && annotationsFolder.createFinalStructure) {
     setTimeout(() => {
-      annotationsFolder.createFinalGroup();
+      annotationsFolder.createFinalStructure(columnDirection, annotationSpacing);
     }, 100); // Небольшая задержка для завершения создания всех аннотаций
   }
 }
