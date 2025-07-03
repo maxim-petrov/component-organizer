@@ -36,6 +36,62 @@ function getComponentSetFromSelection() {
   return null;
 }
 
+// Функция для получения сохраненных настроек компонента
+function getComponentSettings(componentSet) {
+  const defaultSettings = {
+    padding: 40,
+    spacing: 20,
+    columnSpacing: 40,
+    groupSpacing: 80,
+    groupsPerRow: 3,
+    columnDirection: 'horizontal',
+    groupProperties: [],
+    columnProperty: null,
+    showAnnotations: true
+  };
+
+  if (!componentSet) {
+    return defaultSettings;
+  }
+
+  try {
+    const savedData = componentSet.getPluginData('alignmentSettings');
+    if (savedData) {
+      const parsedSettings = JSON.parse(savedData);
+      // Объединяем с настройками по умолчанию для обратной совместимости
+      return Object.assign({}, defaultSettings, parsedSettings);
+    }
+  } catch (error) {
+    console.log('Ошибка при загрузке настроек:', error);
+  }
+
+  return defaultSettings;
+}
+
+// Функция для сохранения настроек компонента
+function saveComponentSettings(componentSet, settings) {
+  if (!componentSet) return;
+  
+  try {
+    const settingsToSave = {
+      padding: settings.padding,
+      spacing: settings.spacing,
+      columnSpacing: settings.columnSpacing,
+      groupSpacing: settings.groupSpacing,
+      groupsPerRow: settings.groupsPerRow,
+      columnDirection: settings.columnDirection,
+      groupProperties: settings.groupProperties,
+      columnProperty: settings.columnProperty,
+      showAnnotations: settings.showAnnotations
+    };
+    
+    componentSet.setPluginData('alignmentSettings', JSON.stringify(settingsToSave));
+    console.log('Настройки сохранены для компонента:', componentSet.name);
+  } catch (error) {
+    console.log('Ошибка при сохранении настроек:', error);
+  }
+}
+
 // Функция для отправки информации о текущем выделении в UI
 function updateSelectionInfo() {
   const componentSet = getComponentSetFromSelection();
@@ -43,6 +99,7 @@ function updateSelectionInfo() {
   if (componentSet) {
     const properties = getVariantProperties(componentSet);
     const variantCount = componentSet.children.filter(child => child.type === 'COMPONENT').length;
+    const savedSettings = getComponentSettings(componentSet);
     
     figma.ui.postMessage({ 
       type: 'selection-updated', 
@@ -50,7 +107,8 @@ function updateSelectionInfo() {
         componentSetName: componentSet.name,
         properties: properties,
         variantCount: variantCount,
-        hasValidSelection: true
+        hasValidSelection: true,
+        savedSettings: savedSettings
       }
     });
   } else {
@@ -60,7 +118,8 @@ function updateSelectionInfo() {
         componentSetName: null,
         properties: [],
         variantCount: 0,
-        hasValidSelection: false
+        hasValidSelection: false,
+        savedSettings: null
       }
     });
   }
@@ -96,64 +155,181 @@ function createAnnotationsFolder(componentSet) {
   if (!parentNode) return null;
   
   const annotationsFolderName = `${componentSet.name} annotations`;
-  const annotationsFolder = figma.createFrame();
-  annotationsFolder.name = annotationsFolderName;
-  annotationsFolder.layoutMode = 'NONE';
-  annotationsFolder.fills = []; // Прозрачный фон
-  annotationsFolder.strokes = []; // Без обводки
-  annotationsFolder.clipsContent = false; // Не обрезать содержимое
   
-  // Позиционируем папку в том же месте что и ComponentSet
-  annotationsFolder.x = componentSet.x;
-  annotationsFolder.y = componentSet.y;
+  // Создаем контейнер для сбора аннотаций
+  const annotationsContainer = {
+    name: annotationsFolderName,
+    parent: parentNode,
+    annotations: [],
+    
+    appendChild: function(child) {
+      this.annotations.push(child);
+      this.parent.appendChild(child);
+    },
+    
+    insertChild: function(index, child) {
+      this.annotations.splice(index, 0, child);
+      this.parent.appendChild(child);
+    },
+    
+    // Метод для создания финальной группы из всех аннотаций
+    createFinalGroup: function() {
+      if (this.annotations.length > 0) {
+        const group = figma.group(this.annotations, this.parent);
+        group.name = this.name;
+        return group;
+      }
+      return null;
+    }
+  };
   
-  // Даем папке большой размер чтобы вместить все аннотации
-  const extraSpace = 200; // Дополнительное место для аннотаций
-  annotationsFolder.resize(
-    componentSet.width + extraSpace, 
-    componentSet.height + extraSpace
-  );
-  
-  parentNode.appendChild(annotationsFolder);
-  return annotationsFolder;
+  return annotationsContainer;
 }
 
-// Функция для создания текстовой аннотации
-function createAnnotation(text, x, y, fontSize = 10, color = {r: 0.4, g: 0.4, b: 0.4}) {
+// Функция для создания текстовой аннотации варианта
+async function createVariantAnnotation(text, x, y) {
   const textNode = figma.createText();
   
-  // Загружаем шрифт (используем стандартный шрифт Figma)
-  figma.loadFontAsync({ family: "Inter", style: "Medium" }).then(() => {
-    textNode.fontName = { family: "Inter", style: "Medium" };
-    textNode.fontSize = fontSize;
-    textNode.fills = [{ type: 'SOLID', color: color }];
-    textNode.characters = text;
-    
-    // Позиционируем аннотацию
-    textNode.x = x;
-    textNode.y = y;
-  }).catch(() => {
-    // Если Inter недоступен, используем системный шрифт
-    figma.loadFontAsync({ family: "Roboto", style: "Medium" }).then(() => {
+  try {
+    // Пытаемся загрузить SB Sans Text
+    await figma.loadFontAsync({ family: "SB Sans Text", style: "Medium" });
+    textNode.fontName = { family: "SB Sans Text", style: "Medium" };
+  } catch (error) {
+    try {
+      // Если SB Sans Text недоступен, используем Inter
+      await figma.loadFontAsync({ family: "Inter", style: "Medium" });
+      textNode.fontName = { family: "Inter", style: "Medium" };
+    } catch (error) {
+      // Последняя попытка с Roboto
+      await figma.loadFontAsync({ family: "Roboto", style: "Medium" });
       textNode.fontName = { family: "Roboto", style: "Medium" };
-      textNode.fontSize = fontSize;
-      textNode.fills = [{ type: 'SOLID', color: color }];
-      textNode.characters = text;
-      
-      textNode.x = x;
-      textNode.y = y;
-    }).catch(() => {
-      // Последняя попытка с базовым шрифтом
-      textNode.fontSize = fontSize;
-      textNode.fills = [{ type: 'SOLID', color: color }];
-      textNode.characters = text;
-      
-      textNode.x = x;
-      textNode.y = y;
-    });
-  });
+    }
+  }
+  
+  textNode.fontSize = 14;
+  textNode.lineHeight = { value: 18, unit: "PIXELS" };
+  textNode.letterSpacing = { value: -0.28, unit: "PIXELS" };
+  textNode.fills = [{ type: 'SOLID', color: { r: 0.482, g: 0.161, b: 0.898 } }]; // #7B29E5
+  textNode.textAlignHorizontal = 'RIGHT';
+  textNode.characters = text;
+  
+  // Ограничиваем ширину текста до 100px с переносом строк
+  textNode.textAutoResize = 'HEIGHT';
+  textNode.resize(100, textNode.height);
+  
+  // Позиционируем аннотацию
+  textNode.x = x;
+  textNode.y = y;
   
   return textNode;
+}
+
+// Функция для создания линии аннотации
+function createAnnotationLine(startX, startY, endX, endY, annotationsFolder) {
+  const line = figma.createVector();
+  
+  // Определяем направление линии
+  const isHorizontal = Math.abs(endX - startX) > Math.abs(endY - startY);
+  const bendLength = 8; // Длина загиба в пикселях
+  
+  let pathData;
+  
+  if (isHorizontal) {
+    // Горизонтальная линия с загибами вниз в начале и конце (оба в сторону ComponentSet)
+    pathData = `M ${startX} ${startY + bendLength} L ${startX} ${startY} L ${endX} ${startY} L ${endX} ${startY + bendLength}`;
+  } else {
+    // Вертикальная линия с загибами вправо в начале и конце (оба в сторону ComponentSet)  
+    pathData = `M ${startX + bendLength} ${startY} L ${startX} ${startY} L ${startX} ${endY} L ${startX + bendLength} ${endY}`;
+  }
+  
+  // Создаем векторные пути
+  line.vectorPaths = [{
+    windingRule: "NONZERO",
+    data: pathData
+  }];
+  
+  // Настраиваем внешний вид линии
+  line.strokes = [{ 
+    type: 'SOLID', 
+    color: { r: 0.482, g: 0.161, b: 0.898 }, // #7B29E5
+    opacity: 0.3 
+  }];
+  line.strokeWeight = 2; // Толщина линии в пикселях
+  line.strokeCap = "ROUND"; // Закругленные концы
+  line.strokeJoin = "ROUND"; // Закругленные соединения
+  line.cornerRadius = 6; // Скругление углов на загибах
+  line.fills = []; // Убираем заливку
+  
+  // Добавляем в папку аннотаций (в самый низ стека слоев)
+  if (annotationsFolder) {
+    annotationsFolder.insertChild(0, line);
+  }
+  
+  return line;
+}
+
+// Функция для создания аннотации группы
+async function createGroupAnnotation(text, x, y) {
+  // Создаем рамку для фона с AutoLayout
+  const backgroundFrame = figma.createFrame();
+  backgroundFrame.name = `Group Label: ${text}`;
+  backgroundFrame.layoutMode = 'HORIZONTAL';
+  backgroundFrame.primaryAxisAlignItems = 'CENTER';
+  backgroundFrame.counterAxisAlignItems = 'CENTER';
+  backgroundFrame.primaryAxisSizingMode = 'AUTO'; // hug content по ширине
+  backgroundFrame.counterAxisSizingMode = 'AUTO'; // hug content по высоте
+  backgroundFrame.paddingLeft = 8;
+  backgroundFrame.paddingRight = 8;
+  backgroundFrame.paddingTop = 3;
+  backgroundFrame.paddingBottom = 4;
+  backgroundFrame.cornerRadius = 10;
+  backgroundFrame.fills = [{ type: 'SOLID', color: { r: 0.482, g: 0.161, b: 0.898 } }]; // #7B29E5
+  backgroundFrame.strokes = [];
+  backgroundFrame.clipsContent = false;
+  
+  // Создаем текст
+  const textNode = figma.createText();
+  
+  try {
+    // Пытаемся загрузить SB Sans Text
+    await figma.loadFontAsync({ family: "SB Sans Text", style: "Medium" });
+    textNode.fontName = { family: "SB Sans Text", style: "Medium" };
+  } catch (error) {
+    try {
+      // Если SB Sans Text недоступен, используем Inter
+      await figma.loadFontAsync({ family: "Inter", style: "Medium" });
+      textNode.fontName = { family: "Inter", style: "Medium" };
+    } catch (error) {
+      // Последняя попытка с Roboto
+      await figma.loadFontAsync({ family: "Roboto", style: "Medium" });
+      textNode.fontName = { family: "Roboto", style: "Medium" };
+    }
+  }
+  
+  textNode.fontSize = 14;
+  textNode.lineHeight = { value: 18, unit: "PIXELS" };
+  textNode.letterSpacing = { value: -0.28, unit: "PIXELS" };
+  textNode.fills = [{ type: 'SOLID', color: { r: 1, g: 1, b: 1 } }]; // #FFF
+  textNode.textAlignHorizontal = 'CENTER';
+  textNode.characters = text;
+  
+  // Устанавливаем auto width с максимальной шириной 100px
+  textNode.textAutoResize = 'WIDTH_AND_HEIGHT';
+  
+  // Если ширина превышает 100px, ограничиваем ее с переносом строк
+  if (textNode.width > 100) {
+    textNode.textAutoResize = 'HEIGHT';
+    textNode.resize(100, textNode.height);
+  }
+  
+  // Добавляем текст в рамку - AutoLayout автоматически центрирует
+  backgroundFrame.appendChild(textNode);
+  
+  // Позиционируем аннотацию
+  backgroundFrame.x = x;
+  backgroundFrame.y = y;
+  
+  return backgroundFrame;
 }
 
 // Функция для многоуровневой группировки вариантов
@@ -224,7 +400,8 @@ function alignComponentVariants(
   columnDirection = 'horizontal',
   groupProperties = [], 
   columnProperty = null,
-  showAnnotations = false
+  showAnnotations = false,
+  annotationSpacing = 24
 ) {
   if (!componentSet || componentSet.type !== 'COMPONENT_SET') {
     figma.notify('Выберите набор компонентов (Component Set)');
@@ -256,7 +433,7 @@ function alignComponentVariants(
     if (groupProperties.length > 0 || columnProperty) {
       // Многоуровневая группировка
       const groups = createMultiLevelGroups(variants, groupProperties, columnProperty);
-      setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations);
+      setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing);
       
       const groupCount = Object.keys(groups).length;
       const totalColumns = Object.values(groups).reduce((max, group) => 
@@ -267,7 +444,7 @@ function alignComponentVariants(
       figma.notify(`Создано ${groupCount} групп (${rows} строк по ${groupsPerRow} макс.) с ${totalColumns} максимум колонок в группе, направление: ${directionText}`);
     } else {
      // Простая сетка без группировки
-     setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations);
+     setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection, annotationSpacing);
      figma.notify(`Варианты выровнены в простую сетку`);
    }
 
@@ -278,7 +455,7 @@ function alignComponentVariants(
 }
 
 // Функция для создания многоуровневого Grid layout
-function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations) {
+function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing = 24) {
   const parentNode = componentSet.parent;
   const componentSetX = componentSet.x;
   const componentSetY = componentSet.y;
@@ -364,22 +541,27 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
       let groupWidth;
       
       if (columnDirection === 'horizontal') {
-        // Горизонтальное расположение колонок
+        // Горизонтальное расположение колонок - аннотации сверху
         columnKeys.forEach((columnKey, columnIndex) => {
           const columnVariants = group[columnKey];
           const columnX = currentGroupX + columnIndex * (maxWidth + columnSpacing);
           
-          // Создаем аннотацию для колонки (если включены аннотации и есть название колонки)
+          // Создаем аннотацию для колонки сверху (если включены аннотации и есть название колонки)
           if (showAnnotations && columnKey !== 'default' && annotationsFolder) {
-            const columnAnnotation = createAnnotation(
+            // Рассчитываем позицию уровня 2 с правильными отступами 24px
+            const variantAnnotationHeight = 25; // примерная высота рамки (hug content адаптируется)
+            const columnAnnotationHeight = 25;
+            const level3Y = componentSetY - annotationSpacing - variantAnnotationHeight; // позиция ВЕРХНЕЙ границы аннотации варианта
+            const level2Y = level3Y - annotationSpacing - columnAnnotationHeight; // позиция ВЕРХНЕЙ границы аннотации колонки
+            
+            createGroupAnnotation(
               columnKey, 
               columnX, 
-              currentRowY - annotationOffset,
-              9,
-              {r: 0.2, g: 0.5, b: 0.8}
-            );
-            columnAnnotation.name = `annotation-column-${columnKey}`;
-            annotationsFolder.appendChild(columnAnnotation);
+              level2Y // Позиционируем на среднем уровне (уровень 2)
+            ).then(annotation => {
+              annotation.name = `annotation-column-${columnKey}`;
+              annotationsFolder.appendChild(annotation);
+            });
           }
           
           // Позиционируем варианты внутри колонки
@@ -387,67 +569,143 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             variant.x = columnX;
             variant.y = currentRowY + itemIndex * (maxHeight + spacing);
             
-            // Создаем аннотацию для варианта (если включены аннотации)
+            // Создаем аннотацию для варианта сверху (если включены аннотации)
             if (showAnnotations && annotationsFolder) {
               const variantName = variant.name || `Variant ${itemIndex + 1}`;
-              const variantAnnotation = createAnnotation(
+              // Уровень 3 - самый близкий к компоненту, отступ 24px от компонента
+              const variantAnnotationHeight = 25;
+              const level3Y = componentSetY - annotationSpacing - variantAnnotationHeight;
+              
+              createVariantAnnotation(
                 variantName,
-                columnX + maxWidth + 5,
-                variant.y + maxHeight / 2 - 5,
-                8,
-                {r: 0.6, g: 0.6, b: 0.6}
-              );
-              variantAnnotation.name = `annotation-variant-${variant.id}`;
-              annotationsFolder.appendChild(variantAnnotation);
+                columnX + maxWidth / 2,
+                level3Y // Позиционируем с отступом 24px от компонента (уровень 3 - самый специфичный)
+              ).then(annotation => {
+                annotation.name = `annotation-variant-${variant.id}`;
+                annotationsFolder.appendChild(annotation);
+              });
             }
           });
         });
         
         groupWidth = columnKeys.length * maxWidth + (columnKeys.length - 1) * columnSpacing;
         
-        // Создаем аннотацию для группы (если включены аннотации и есть название группы)
+        // Создаем аннотацию для группы сверху по центру (если включены аннотации и есть название группы)
         if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
-          const groupAnnotation = createAnnotation(
+          const groupCenterX = currentGroupX + groupWidth / 2;
+          // Рассчитываем позицию с правильными отступами 24px между уровнями
+          // Нижняя граница аннотации варианта должна быть на 24px выше компонента
+          // Нижняя граница аннотации колонки должна быть на 24px выше верхней границы аннотации варианта
+          // Нижняя граница аннотации группы должна быть на 24px выше верхней границы аннотации колонки
+          const variantAnnotationHeight = 25; // примерная высота для одной строки (hug content адаптируется)
+          const columnAnnotationHeight = 25;
+          
+          const level3Y = componentSetY - annotationSpacing - variantAnnotationHeight; // позиция ВЕРХНЕЙ границы аннотации варианта
+          const level2Y = level3Y - annotationSpacing - columnAnnotationHeight; // позиция ВЕРХНЕЙ границы аннотации колонки  
+          const level1Y = level2Y - annotationSpacing - columnAnnotationHeight; // позиция ВЕРХНЕЙ границы аннотации группы
+          
+          const annotationY = level1Y;
+          
+          // Создаем аннотацию по центру группы
+          createGroupAnnotation(
             groupKey,
-            currentGroupX,
-            currentRowY - annotationOffset - 15,
-            10,
-            {r: 0.8, g: 0.2, b: 0.2}
-          );
-          groupAnnotation.name = `annotation-group-${groupKey}`;
-          annotationsFolder.appendChild(groupAnnotation);
+            groupCenterX,
+            annotationY
+          ).then(annotation => {
+            annotation.name = `annotation-group-${groupKey}`;
+            // Центрируем аннотацию относительно своей ширины
+            annotation.x = groupCenterX - annotation.width / 2;
+            annotationsFolder.appendChild(annotation);
+            
+            // Создаем горизонтальную линию под аннотацией от начала до конца группы
+            // Центрируем линию по вертикали относительно аннотации
+            const lineCenterY = annotationY + annotation.height / 2;
+            createAnnotationLine(
+              currentGroupX,
+              lineCenterY,
+              currentGroupX + groupWidth,
+              lineCenterY,
+              annotationsFolder
+            );
+          });
         }
       } else {
-        // Вертикальное расположение колонок
+        // Вертикальное расположение колонок - аннотации слева
         let currentColumnY = currentRowY;
+        const groupStartY = currentColumnY;
         
-        // Создаем аннотацию для группы (если включены аннотации и есть название группы)
-        if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
-          const groupAnnotation = createAnnotation(
-            groupKey,
-            currentGroupX - 10,
-            currentColumnY - annotationOffset - 15,
-            10,
-            {r: 0.8, g: 0.2, b: 0.2}
-          );
-          groupAnnotation.name = `annotation-group-${groupKey}`;
-          annotationsFolder.appendChild(groupAnnotation);
-        }
-        
-        columnKeys.forEach((columnKey, columnIndex) => {
+                 // Сначала рассчитываем общую высоту группы
+         let totalGroupHeight = 0;
+         columnKeys.forEach((columnKey, columnIndex) => {
+           const columnVariants = group[columnKey];
+           const columnHeight = columnVariants.length * maxHeight + (columnVariants.length - 1) * spacing;
+           totalGroupHeight += columnHeight;
+           
+           // Добавляем отступ между колонками (кроме последней)
+           if (columnIndex < columnKeys.length - 1) {
+             totalGroupHeight += columnSpacing;
+           }
+         });
+         
+         // Создаем аннотацию для группы слева по центру (если включены аннотации и есть название группы)
+         if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
+           const groupCenterY = groupStartY + totalGroupHeight / 2;
+           // Рассчитываем позицию с правильными отступами 24px между уровнями
+           // Правая граница аннотации варианта должна быть на 24px левее компонента
+           // Правая граница аннотации колонки должна быть на 24px левее левой границы аннотации варианта
+           // Правая граница аннотации группы должна быть на 24px левее левой границы аннотации колонки
+           const variantAnnotationWidth = 116; // примерная ширина (hug content адаптируется)
+           const columnAnnotationWidth = 116;
+           
+           const level3X = componentSetX - annotationSpacing - variantAnnotationWidth; // позиция ЛЕВОЙ границы аннотации варианта
+           const level2X = level3X - annotationSpacing - columnAnnotationWidth; // позиция ЛЕВОЙ границы аннотации колонки
+           const level1X = level2X - annotationSpacing - columnAnnotationWidth; // позиция ЛЕВОЙ границы аннотации группы
+           
+           const annotationX = level1X;
+           
+           // Создаем аннотацию по центру группы
+           createGroupAnnotation(
+             groupKey,
+             annotationX,
+             groupCenterY
+           ).then(annotation => {
+             annotation.name = `annotation-group-${groupKey}`;
+             // Центрируем аннотацию относительно своей высоты
+             annotation.y = groupCenterY - annotation.height / 2;
+             annotationsFolder.appendChild(annotation);
+             
+             // Создаем вертикальную линию справа от аннотации от начала до конца группы
+             // Центрируем линию по горизонтали относительно аннотации
+             const lineCenterX = annotationX + annotation.width / 2;
+             createAnnotationLine(
+               lineCenterX,
+               groupStartY,
+               lineCenterX,
+               groupStartY + totalGroupHeight,
+               annotationsFolder
+             );
+           });
+         }
+         
+         columnKeys.forEach((columnKey, columnIndex) => {
           const columnVariants = group[columnKey];
           
-          // Создаем аннотацию для колонки (если включены аннотации и есть название колонки)
+          // Создаем аннотацию для колонки слева (если включены аннотации и есть название колонки)
           if (showAnnotations && columnKey !== 'default' && annotationsFolder) {
-            const columnAnnotation = createAnnotation(
+            // Рассчитываем позицию уровня 2 с правильными отступами 24px
+            const variantAnnotationWidth = 116; // примерная ширина рамки (hug content адаптируется)
+            const columnAnnotationWidth = 116;
+            const level3X = componentSetX - annotationSpacing - variantAnnotationWidth; // позиция ЛЕВОЙ границы аннотации варианта
+            const level2X = level3X - annotationSpacing - columnAnnotationWidth; // позиция ЛЕВОЙ границы аннотации колонки
+            
+            createGroupAnnotation(
               columnKey,
-              currentGroupX - 10,
-              currentColumnY - annotationOffset,
-              9,
-              {r: 0.2, g: 0.5, b: 0.8}
-            );
-            columnAnnotation.name = `annotation-column-${columnKey}`;
-            annotationsFolder.appendChild(columnAnnotation);
+              level2X, // Позиционируем на среднем уровне (уровень 2)
+              currentColumnY + 5
+            ).then(annotation => {
+              annotation.name = `annotation-column-${columnKey}`;
+              annotationsFolder.appendChild(annotation);
+            });
           }
           
           // Позиционируем варианты внутри колонки
@@ -455,18 +713,21 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             variant.x = currentGroupX;
             variant.y = currentColumnY + itemIndex * (maxHeight + spacing);
             
-            // Создаем аннотацию для варианта (если включены аннотации)
+            // Создаем аннотацию для варианта слева (если включены аннотации)
             if (showAnnotations && annotationsFolder) {
               const variantName = variant.name || `Variant ${itemIndex + 1}`;
-              const variantAnnotation = createAnnotation(
+              // Уровень 3 - самый близкий к компоненту, отступ 24px от компонента
+              const variantAnnotationWidth = 116;
+              const level3X = componentSetX - annotationSpacing - variantAnnotationWidth;
+              
+              createVariantAnnotation(
                 variantName,
-                currentGroupX + maxWidth + 5,
-                variant.y + maxHeight / 2 - 5,
-                8,
-                {r: 0.6, g: 0.6, b: 0.6}
-              );
-              variantAnnotation.name = `annotation-variant-${variant.id}`;
-              annotationsFolder.appendChild(variantAnnotation);
+                level3X, // Позиционируем с отступом 24px от компонента (уровень 3 - самый специфичный)
+                variant.y + maxHeight / 2 - 9
+              ).then(annotation => {
+                annotation.name = `annotation-variant-${variant.id}`;
+                annotationsFolder.appendChild(annotation);
+              });
             }
           });
           
@@ -501,11 +762,18 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
   
   componentSet.resize(totalWidth, totalHeight);
   
+  // Создаем финальную группу из всех аннотаций
+  if (annotationsFolder && annotationsFolder.createFinalGroup) {
+    setTimeout(() => {
+      annotationsFolder.createFinalGroup();
+    }, 100); // Небольшая задержка для завершения создания всех аннотаций
+  }
+  
   console.log(`Groups positioned: ${groupKeys.length} groups in ${Math.ceil(groupKeys.length / groupsPerRow)} rows, total size: ${totalWidth}x${totalHeight}`);
 }
 
 // Функция для создания простого Grid layout (резервная)
-function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations) {
+function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection = 'horizontal', annotationSpacing = 24) {
   const parentNode = componentSet.parent;
   const componentSetX = componentSet.x;
   const componentSetY = componentSet.y;
@@ -529,25 +797,53 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
     variant.x = padding;
     variant.y = padding + index * (maxHeight + spacing);
     
-    // Создаем аннотацию для варианта (если включены аннотации)
+    // Создаем аннотацию для варианта в зависимости от направления (если включены аннотации)
     if (showAnnotations && annotationsFolder) {
       const variantName = variant.name || `Variant ${index + 1}`;
-      const variantAnnotation = createAnnotation(
-        variantName,
-        padding + maxWidth + 5,
-        variant.y + maxHeight / 2 - 5,
-        8,
-        {r: 0.6, g: 0.6, b: 0.6}
-      );
-      variantAnnotation.name = `annotation-variant-${variant.id}`;
-      annotationsFolder.appendChild(variantAnnotation);
+      
+      if (columnDirection === 'horizontal') {
+        // Для горизонтального направления - аннотации сверху
+        // Уровень 3 - единственный уровень в простом layout, отступ 24px от компонента
+        const variantAnnotationHeight = 25;
+        const level3Y = componentSetY - annotationSpacing - variantAnnotationHeight;
+        
+        createVariantAnnotation(
+          variantName,
+          padding + maxWidth / 2,
+          level3Y // Позиционируем с отступом 24px от компонента (уровень 3 - самый специфичный)
+        ).then(annotation => {
+          annotation.name = `annotation-variant-${variant.id}`;
+          annotationsFolder.appendChild(annotation);
+        });
+      } else {
+        // Для вертикального направления - аннотации слева
+        // Уровень 3 - единственный уровень в простом layout, отступ 24px от компонента
+        const variantAnnotationWidth = 116;
+        const level3X = componentSetX - annotationSpacing - variantAnnotationWidth;
+        
+        createVariantAnnotation(
+          variantName,
+          level3X, // Позиционируем с отступом 24px от компонента (уровень 3 - самый специфичный)
+          variant.y + maxHeight / 2 - 9
+        ).then(annotation => {
+          annotation.name = `annotation-variant-${variant.id}`;
+          annotationsFolder.appendChild(annotation);
+        });
+      }
     }
   });
   
-  const totalWidth = maxWidth + 2 * padding + (showAnnotations ? 150 : 0); // Дополнительное место для аннотаций
+  const totalWidth = maxWidth + 2 * padding; // Аннотации теперь располагаются за пределами ComponentSet
   const totalHeight = variants.length * maxHeight + (variants.length - 1) * spacing + 2 * padding;
   
   componentSet.resize(totalWidth, totalHeight);
+  
+  // Создаем финальную группу из всех аннотаций
+  if (annotationsFolder && annotationsFolder.createFinalGroup) {
+    setTimeout(() => {
+      annotationsFolder.createFinalGroup();
+    }, 100); // Небольшая задержка для завершения создания всех аннотаций
+  }
 }
 
 // Отслеживание изменения выделения
@@ -569,27 +865,34 @@ figma.ui.onmessage = (msg) => {
       return;
     }
 
-    const padding = msg.padding || 40;
-    const spacing = msg.spacing || 20;
-    const columnSpacing = msg.columnSpacing || 40;
-    const groupSpacing = msg.groupSpacing || 80;
-    const groupsPerRow = msg.groupsPerRow || 3;
-    const columnDirection = msg.columnDirection || 'horizontal';
-    const groupProperties = msg.groupProperties || [];
-    const columnProperty = msg.columnProperty || null;
-    const showAnnotations = msg.showAnnotations || false;
+    const settings = {
+      padding: msg.padding || 40,
+      spacing: msg.spacing || 20,
+      columnSpacing: msg.columnSpacing || 40,
+      groupSpacing: msg.groupSpacing || 80,
+      groupsPerRow: msg.groupsPerRow || 3,
+      columnDirection: msg.columnDirection || 'horizontal',
+      groupProperties: msg.groupProperties || [],
+      columnProperty: msg.columnProperty || null,
+      showAnnotations: msg.showAnnotations || false,
+      annotationSpacing: msg.annotationSpacing || 24
+    };
+
+    // Сохраняем настройки перед применением
+    saveComponentSettings(componentSet, settings);
 
     alignComponentVariants(
       componentSet, 
-      padding, 
-      spacing, 
-      columnSpacing, 
-      groupSpacing, 
-      groupsPerRow,
-      columnDirection,
-      groupProperties, 
-      columnProperty,
-      showAnnotations
+      settings.padding, 
+      settings.spacing, 
+      settings.columnSpacing, 
+      settings.groupSpacing, 
+      settings.groupsPerRow,
+      settings.columnDirection,
+      settings.groupProperties, 
+      settings.columnProperty,
+      settings.showAnnotations,
+      settings.annotationSpacing
     );
   }
   
