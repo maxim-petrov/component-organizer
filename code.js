@@ -487,6 +487,10 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
         // Создаем аннотацию для группы сверху по центру (если включены аннотации и есть название группы)
         if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
           const groupCenterX = currentGroupX + groupWidth / 2;
+          // Сохраняем значения в локальных переменных для использования в .then()
+          const groupStartX = currentGroupX;
+          const currentGroupWidth = groupWidth;
+          
           // Рассчитываем позицию с правильными отступами 24px между уровнями
           // Нижняя граница аннотации варианта должна быть на 24px выше компонента
           // Нижняя граница аннотации колонки должна быть на 24px выше верхней границы аннотации варианта
@@ -515,9 +519,9 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             // Центрируем линию по вертикали относительно аннотации
             const lineCenterY = annotationY + annotation.height / 2;
             createAnnotationLine(
-              currentGroupX,
+              groupStartX,
               lineCenterY,
-              currentGroupX + groupWidth,
+              groupStartX + currentGroupWidth,
               lineCenterY,
               annotationsFolder
             );
@@ -544,6 +548,10 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
          // Создаем аннотацию для группы слева по центру (если включены аннотации и есть название группы)
          if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
            const groupCenterY = groupStartY + totalGroupHeight / 2;
+           // Сохраняем значения в локальных переменных для использования в .then()
+           const currentGroupStartY = groupStartY;
+           const currentTotalGroupHeight = totalGroupHeight;
+           
            // Рассчитываем позицию с правильными отступами 24px между уровнями
            // Правая граница аннотации варианта должна быть на 24px левее компонента
            // Правая граница аннотации колонки должна быть на 24px левее левой границы аннотации варианта
@@ -573,9 +581,9 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
              const lineCenterX = annotationX + annotation.width / 2;
              createAnnotationLine(
                lineCenterX,
-               groupStartY,
+               currentGroupStartY,
                lineCenterX,
-               groupStartY + totalGroupHeight,
+               currentGroupStartY + currentTotalGroupHeight,
                annotationsFolder
              );
            });
