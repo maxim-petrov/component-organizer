@@ -374,6 +374,10 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
   if (showAnnotations && parentNode) {
     annotationsFolder = createAnnotationsFolder(componentSet);
   }
+  
+  // Создаем набор для отслеживания уже созданных аннотаций
+  const createdAnnotations = new Set();
+  
   // Находим максимальные размеры среди всех компонентов
   let maxWidth = 0;
   let maxHeight = 0;
@@ -455,8 +459,8 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           const columnVariants = group[columnKey];
           const columnX = currentGroupX + columnIndex * (maxWidth + columnSpacing);
           
-          // Создаем аннотацию для колонки сверху (если включены аннотации и есть название колонки)
-          if (showAnnotations && columnKey !== 'default' && annotationsFolder) {
+          // Создаем аннотацию для колонки сверху (если включены аннотации, есть название колонки и она еще не создана в этой позиции)
+          if (showAnnotations && columnKey !== 'default' && annotationsFolder && !createdAnnotations.has(`column-pos-${columnX}`)) {
             // Рассчитываем позицию уровня 2 с правильными отступами 24px
             const variantAnnotationHeight = 25; // примерная высота рамки (hug content адаптируется)
             const columnAnnotationHeight = 25;
@@ -471,30 +475,28 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
               annotation.name = `annotation-column-${columnKey}`;
               annotationsFolder.appendChild(annotation);
             });
+            
+            // Отмечаем, что аннотация для этой позиции уже создана
+            createdAnnotations.add(`column-pos-${columnX}`);
           }
           
           // Позиционируем варианты внутри колонки
           columnVariants.forEach((variant, itemIndex) => {
             variant.x = columnX;
             variant.y = currentRowY + itemIndex * (maxHeight + spacing);
-            
-
           });
         });
         
         groupWidth = columnKeys.length * maxWidth + (columnKeys.length - 1) * columnSpacing;
         
-        // Создаем аннотацию для группы сверху по центру (если включены аннотации и есть название группы)
-        if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
+        // Создаем аннотацию для группы сверху по центру (если включены аннотации, есть название группы и она еще не создана)
+        if (showAnnotations && groupKey !== 'default' && annotationsFolder && !createdAnnotations.has(`group-${groupKey}`)) {
           const groupCenterX = currentGroupX + groupWidth / 2;
           // Сохраняем значения в локальных переменных для использования в .then()
           const groupStartX = currentGroupX;
           const currentGroupWidth = groupWidth;
           
           // Рассчитываем позицию с правильными отступами 24px между уровнями
-          // Нижняя граница аннотации варианта должна быть на 24px выше компонента
-          // Нижняя граница аннотации колонки должна быть на 24px выше верхней границы аннотации варианта
-          // Нижняя граница аннотации группы должна быть на 24px выше верхней границы аннотации колонки
           const variantAnnotationHeight = 25; // примерная высота для одной строки (hug content адаптируется)
           const columnAnnotationHeight = 25;
           
@@ -526,74 +528,77 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
               annotationsFolder
             );
           });
+          
+          // Отмечаем, что аннотация для этой группы уже создана
+          createdAnnotations.add(`group-${groupKey}`);
         }
       } else {
         // Вертикальное расположение колонок - аннотации слева
         let currentColumnY = currentRowY;
         const groupStartY = currentColumnY;
         
-                 // Сначала рассчитываем общую высоту группы
-         let totalGroupHeight = 0;
-         columnKeys.forEach((columnKey, columnIndex) => {
-           const columnVariants = group[columnKey];
-           const columnHeight = columnVariants.length * maxHeight + (columnVariants.length - 1) * spacing;
-           totalGroupHeight += columnHeight;
-           
-           // Добавляем отступ между колонками (кроме последней)
-           if (columnIndex < columnKeys.length - 1) {
-             totalGroupHeight += columnSpacing;
-           }
-         });
-         
-         // Создаем аннотацию для группы слева по центру (если включены аннотации и есть название группы)
-         if (showAnnotations && groupKey !== 'default' && annotationsFolder) {
-           const groupCenterY = groupStartY + totalGroupHeight / 2;
-           // Сохраняем значения в локальных переменных для использования в .then()
-           const currentGroupStartY = groupStartY;
-           const currentTotalGroupHeight = totalGroupHeight;
-           
-           // Рассчитываем позицию с правильными отступами 24px между уровнями
-           // Правая граница аннотации варианта должна быть на 24px левее компонента
-           // Правая граница аннотации колонки должна быть на 24px левее левой границы аннотации варианта
-           // Правая граница аннотации группы должна быть на 24px левее левой границы аннотации колонки
-           const variantAnnotationWidth = 116; // примерная ширина (hug content адаптируется)
-           const columnAnnotationWidth = 116;
-           
-           const level3X = componentSetX - annotationSpacing - variantAnnotationWidth; // позиция ЛЕВОЙ границы аннотации варианта
-           const level2X = level3X - annotationSpacing - columnAnnotationWidth; // позиция ЛЕВОЙ границы аннотации колонки
-           const level1X = level2X - annotationSpacing - columnAnnotationWidth; // позиция ЛЕВОЙ границы аннотации группы
-           
-           const annotationX = level1X;
-           
-           // Создаем аннотацию по центру группы
-           createGroupAnnotation(
-             groupKey,
-             annotationX,
-             groupCenterY
-           ).then(annotation => {
-             annotation.name = `annotation-group-${groupKey}`;
-             // Центрируем аннотацию относительно своей высоты
-             annotation.y = groupCenterY - annotation.height / 2;
-             annotationsFolder.appendChild(annotation);
-             
-             // Создаем вертикальную линию справа от аннотации от начала до конца группы
-             // Центрируем линию по горизонтали относительно аннотации
-             const lineCenterX = annotationX + annotation.width / 2;
-             createAnnotationLine(
-               lineCenterX,
-               currentGroupStartY,
-               lineCenterX,
-               currentGroupStartY + currentTotalGroupHeight,
-               annotationsFolder
-             );
-           });
-         }
-         
-         columnKeys.forEach((columnKey, columnIndex) => {
+        // Сначала рассчитываем общую высоту группы
+        let totalGroupHeight = 0;
+        columnKeys.forEach((columnKey, columnIndex) => {
+          const columnVariants = group[columnKey];
+          const columnHeight = columnVariants.length * maxHeight + (columnVariants.length - 1) * spacing;
+          totalGroupHeight += columnHeight;
+          
+          // Добавляем отступ между колонками (кроме последней)
+          if (columnIndex < columnKeys.length - 1) {
+            totalGroupHeight += columnSpacing;
+          }
+        });
+        
+        // Создаем аннотацию для группы слева по центру (если включены аннотации, есть название группы и она еще не создана)
+        if (showAnnotations && groupKey !== 'default' && annotationsFolder && !createdAnnotations.has(`group-${groupKey}`)) {
+          const groupCenterY = groupStartY + totalGroupHeight / 2;
+          // Сохраняем значения в локальных переменных для использования в .then()
+          const currentGroupStartY = groupStartY;
+          const currentTotalGroupHeight = totalGroupHeight;
+          
+          // Рассчитываем позицию с правильными отступами 24px между уровнями
+          const variantAnnotationWidth = 116; // примерная ширина (hug content адаптируется)
+          const columnAnnotationWidth = 116;
+          
+          const level3X = componentSetX - annotationSpacing - variantAnnotationWidth; // позиция ЛЕВОЙ границы аннотации варианта
+          const level2X = level3X - annotationSpacing - columnAnnotationWidth; // позиция ЛЕВОЙ границы аннотации колонки
+          const level1X = level2X - annotationSpacing - columnAnnotationWidth; // позиция ЛЕВОЙ границы аннотации группы
+          
+          const annotationX = level1X;
+          
+          // Создаем аннотацию по центру группы
+          createGroupAnnotation(
+            groupKey,
+            annotationX,
+            groupCenterY
+          ).then(annotation => {
+            annotation.name = `annotation-group-${groupKey}`;
+            // Центрируем аннотацию относительно своей высоты
+            annotation.y = groupCenterY - annotation.height / 2;
+            annotationsFolder.appendChild(annotation);
+            
+            // Создаем вертикальную линию справа от аннотации от начала до конца группы
+            // Центрируем линию по горизонтали относительно аннотации
+            const lineCenterX = annotationX + annotation.width / 2;
+            createAnnotationLine(
+              lineCenterX,
+              currentGroupStartY,
+              lineCenterX,
+              currentGroupStartY + currentTotalGroupHeight,
+              annotationsFolder
+            );
+          });
+          
+          // Отмечаем, что аннотация для этой группы уже создана
+          createdAnnotations.add(`group-${groupKey}`);
+        }
+        
+        columnKeys.forEach((columnKey, columnIndex) => {
           const columnVariants = group[columnKey];
           
-          // Создаем аннотацию для колонки слева (если включены аннотации и есть название колонки)
-          if (showAnnotations && columnKey !== 'default' && annotationsFolder) {
+          // Создаем аннотацию для колонки слева (если включены аннотации, есть название колонки и она еще не создана в этой позиции)
+          if (showAnnotations && columnKey !== 'default' && annotationsFolder && !createdAnnotations.has(`column-pos-${currentColumnY}`)) {
             // Рассчитываем позицию уровня 2 с правильными отступами 24px
             const variantAnnotationWidth = 116; // примерная ширина рамки (hug content адаптируется)
             const columnAnnotationWidth = 116;
@@ -608,14 +613,15 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
               annotation.name = `annotation-column-${columnKey}`;
               annotationsFolder.appendChild(annotation);
             });
+            
+            // Отмечаем, что аннотация для этой позиции уже создана
+            createdAnnotations.add(`column-pos-${currentColumnY}`);
           }
           
           // Позиционируем варианты внутри колонки
           columnVariants.forEach((variant, itemIndex) => {
             variant.x = currentGroupX;
             variant.y = currentColumnY + itemIndex * (maxHeight + spacing);
-            
-
           });
           
           // Переходим к следующей колонке по вертикали
