@@ -390,6 +390,48 @@ async function createGroupAnnotation(text, x, y) {
   return backgroundFrame;
 }
 
+// Функция для создания обернутой аннотации колонки
+async function createWrappedColumnAnnotation(text, x, y, columnDirection, columnWidth, columnHeight) {
+  // Создаем аннотацию
+  const annotation = await createGroupAnnotation(text, 0, 0); // Позиционируем относительно контейнера
+  annotation.name = `annotation-column-${text}`;
+  
+  // Создаем контейнер с Auto Layout
+  const container = figma.createFrame();
+  container.name = `Column Wrapper: ${text}`;
+  container.fills = []; // Прозрачный фон
+  container.strokes = []; // Без границ
+  container.clipsContent = false;
+  
+  // Настраиваем Auto Layout в зависимости от направления
+  if (columnDirection === 'horizontal') {
+    // Горизонтальное направление: контейнер должен быть шириной как колонка
+    container.layoutMode = 'HORIZONTAL';
+    container.primaryAxisAlignItems = 'CENTER'; // Центрируем по горизонтали
+    container.counterAxisAlignItems = 'MIN'; // Выравниваем по верху
+    container.primaryAxisSizingMode = 'FIXED'; // Фиксированная ширина
+    container.counterAxisSizingMode = 'AUTO'; // Высота по содержимому
+    container.resize(columnWidth, 50); // Временная высота, Auto Layout подстроит
+  } else {
+    // Вертикальное направление: контейнер должен быть высотой как колонка
+    container.layoutMode = 'VERTICAL';
+    container.primaryAxisAlignItems = 'CENTER'; // Центрируем по вертикали
+    container.counterAxisAlignItems = 'MIN'; // Выравниваем по левому краю
+    container.primaryAxisSizingMode = 'FIXED'; // Фиксированная высота
+    container.counterAxisSizingMode = 'AUTO'; // Ширина по содержимому
+    container.resize(200, columnHeight); // Временная ширина, Auto Layout подстроит
+  }
+  
+  // Добавляем аннотацию в контейнер
+  container.appendChild(annotation);
+  
+  // Позиционируем контейнер
+  container.x = x;
+  container.y = y;
+  
+  return container;
+}
+
 // Функция для многоуровневой группировки вариантов
 function createMultiLevelGroups(variants, groupProperties, columnProperty) {
   // Сначала группируем по основным свойствам
@@ -620,13 +662,16 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             const level3Y = componentSetY - annotationSpacing - variantAnnotationHeight; // позиция ВЕРХНЕЙ границы аннотации варианта
             const level2Y = level3Y - annotationSpacing - columnAnnotationHeight; // позиция ВЕРХНЕЙ границы аннотации колонки
             
-            createGroupAnnotation(
-              columnKey, 
-              columnX, 
-              level2Y // Позиционируем на среднем уровне (уровень 2)
-            ).then(annotation => {
-              annotation.name = `annotation-column-${columnKey}`;
-              annotationsFolder.addLevel1Annotation(annotation);
+            // Создаем обернутую аннотацию с шириной колонки
+            createWrappedColumnAnnotation(
+              columnKey,
+              columnX,
+              level2Y,
+              columnDirection,
+              maxWidth, // ширина колонки
+              0 // высота не важна для горизонтального направления
+            ).then(wrapper => {
+              annotationsFolder.addLevel1Annotation(wrapper);
             });
             
             // Отмечаем, что аннотация для этой позиции уже создана
@@ -798,13 +843,19 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             const level3X = componentSetX - annotationSpacing - variantAnnotationWidth; // позиция ЛЕВОЙ границы аннотации варианта
             const level2X = level3X - annotationSpacing - columnAnnotationWidth; // позиция ЛЕВОЙ границы аннотации колонки
             
-            createGroupAnnotation(
+            // Рассчитываем высоту колонки
+            const columnHeight = columnVariants.length * maxHeight + (columnVariants.length - 1) * spacing;
+            
+            // Создаем обернутую аннотацию с высотой колонки
+            createWrappedColumnAnnotation(
               columnKey,
-              level2X, // Позиционируем на среднем уровне (уровень 2)
-              currentColumnY + 5
-            ).then(annotation => {
-              annotation.name = `annotation-column-${columnKey}`;
-              annotationsFolder.addLevel1Annotation(annotation);
+              level2X,
+              currentColumnY,
+              columnDirection,
+              0, // ширина не важна для вертикального направления
+              columnHeight // высота колонки
+            ).then(wrapper => {
+              annotationsFolder.addLevel1Annotation(wrapper);
             });
             
             // Отмечаем, что аннотация для этой позиции уже создана
