@@ -432,6 +432,48 @@ async function createWrappedColumnAnnotation(text, x, y, columnDirection, column
   return container;
 }
 
+// Функция для создания обернутой аннотации строки
+async function createWrappedRowAnnotation(text, x, y, columnDirection, rowWidth, rowHeight) {
+  // Создаем аннотацию
+  const annotation = await createGroupAnnotation(text, 0, 0); // Позиционируем относительно контейнера
+  annotation.name = `annotation-row-${text}`;
+  
+  // Создаем контейнер с Auto Layout
+  const container = figma.createFrame();
+  container.name = `Row Wrapper: ${text}`;
+  container.fills = []; // Прозрачный фон
+  container.strokes = []; // Без границ
+  container.clipsContent = false;
+  
+  // Настраиваем Auto Layout в зависимости от направления
+  if (columnDirection === 'horizontal') {
+    // Горизонтальное направление: контейнер должен быть высотой как строка (вариант)
+    container.layoutMode = 'VERTICAL';
+    container.primaryAxisAlignItems = 'CENTER'; // Центрируем по вертикали
+    container.counterAxisAlignItems = 'MIN'; // Выравниваем по левому краю
+    container.primaryAxisSizingMode = 'FIXED'; // Фиксированная высота
+    container.counterAxisSizingMode = 'AUTO'; // Ширина по содержимому
+    container.resize(200, rowHeight); // Временная ширина, Auto Layout подстроит
+  } else {
+    // Вертикальное направление: контейнер должен быть шириной как строка (вариант)
+    container.layoutMode = 'HORIZONTAL';
+    container.primaryAxisAlignItems = 'CENTER'; // Центрируем по горизонтали
+    container.counterAxisAlignItems = 'MIN'; // Выравниваем по верху
+    container.primaryAxisSizingMode = 'FIXED'; // Фиксированная ширина
+    container.counterAxisSizingMode = 'AUTO'; // Высота по содержимому
+    container.resize(rowWidth, 50); // Временная высота, Auto Layout подстроит
+  }
+  
+  // Добавляем аннотацию в контейнер
+  container.appendChild(annotation);
+  
+  // Позиционируем контейнер
+  container.x = x;
+  container.y = y;
+  
+  return container;
+}
+
 // Функция для многоуровневой группировки вариантов
 function createMultiLevelGroups(variants, groupProperties, columnProperty) {
   // Сначала группируем по основным свойствам
@@ -709,13 +751,16 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
                   const rowAnnotationWidth = 116;
                   const rowAnnotationX = componentSetX - annotationSpacing - rowAnnotationWidth;
                   
-                  createGroupAnnotation(
+                  // Создаем обернутую аннотацию с высотой строки (варианта)
+                  createWrappedRowAnnotation(
                     rowName,
                     rowAnnotationX,
-                    rowY + maxHeight / 2 - 12 // Центрируем по высоте варианта
-                  ).then(annotation => {
-                    annotation.name = `annotation-row-${rowName}`;
-                    annotationsFolder.addRowAnnotation(annotation);
+                    rowY, // Позиционируем контейнер по верхнему краю варианта
+                    columnDirection,
+                    0, // ширина не важна для горизонтального направления
+                    maxHeight // высота строки (варианта)
+                  ).then(wrapper => {
+                    annotationsFolder.addRowAnnotation(wrapper);
                   });
                   
                   createdRowAnnotations.add(rowKey);
@@ -893,13 +938,16 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
                   const rowAnnotationHeight = 25;
                   const rowAnnotationY = componentSetY - annotationSpacing - rowAnnotationHeight;
                   
-                  createGroupAnnotation(
+                  // Создаем обернутую аннотацию с шириной строки (варианта)
+                  createWrappedRowAnnotation(
                     rowName,
-                    rowX + maxWidth / 2 - 50, // Центрируем по ширине варианта
-                    rowAnnotationY
-                  ).then(annotation => {
-                    annotation.name = `annotation-row-${rowName}`;
-                    annotationsFolder.addRowAnnotation(annotation);
+                    rowX, // Позиционируем контейнер по левому краю варианта
+                    rowAnnotationY,
+                    columnDirection,
+                    maxWidth, // ширина строки (варианта)
+                    0 // высота не важна для вертикального направления
+                  ).then(wrapper => {
+                    annotationsFolder.addRowAnnotation(wrapper);
                   });
                   
                   createdRowAnnotations.add(rowKey);
