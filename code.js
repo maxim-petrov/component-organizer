@@ -105,9 +105,13 @@ function createAnnotationsFolder(componentSet) {
   const annotationsContainer = {
     name: annotationsFolderName,
     parent: parentNode,
+    // Основные аннотации
     level1Annotations: [], // колонки
     level2Annotations: [], // группы
     lines: [], // линии
+    // Дополнительные аннотации
+    rowAnnotations: [], // строки
+    rowLines: [], // линии для строк
     
     addLevel1Annotation: function(annotation) {
       this.level1Annotations.push(annotation);
@@ -124,12 +128,48 @@ function createAnnotationsFolder(componentSet) {
       this.parent.appendChild(line);
     },
     
+    addRowAnnotation: function(annotation) {
+      this.rowAnnotations.push(annotation);
+      this.parent.appendChild(annotation);
+    },
+    
+    addRowLine: function(line) {
+      this.rowLines.push(line);
+      this.parent.appendChild(line);
+    },
+    
     // Метод для создания финальной структуры папок из всех аннотаций
     createFinalStructure: function(columnDirection, annotationSpacing = 24, componentSet = null, padding = 0) {
-      if (this.level1Annotations.length === 0 && this.level2Annotations.length === 0) {
+      const mainAnnotations = this.level1Annotations.length > 0 || this.level2Annotations.length > 0;
+      const rowAnnotations = this.rowAnnotations.length > 0;
+      
+      if (!mainAnnotations && !rowAnnotations) {
         return null;
       }
       
+      const createdFrames = [];
+      
+      // Создаем основную группу аннотаций (группы + колонки)
+      if (mainAnnotations) {
+        const mainFrame = this.createMainAnnotationsFrame(columnDirection, annotationSpacing, componentSet, padding);
+        if (mainFrame) {
+          createdFrames.push(mainFrame);
+        }
+      }
+      
+      // Создаем дополнительную группу аннотаций (строки)
+      if (rowAnnotations) {
+        const rowFrame = this.createRowAnnotationsFrame(columnDirection, annotationSpacing, componentSet, padding);
+        if (rowFrame) {
+          createdFrames.push(rowFrame);
+        }
+      }
+      
+      return createdFrames;
+    },
+    
+    // Создание основной группы аннотаций
+    createMainAnnotationsFrame: function(columnDirection, annotationSpacing, componentSet, padding) {
       const allElements = [];
       
       // Создаем папки для каждого уровня только если есть аннотации этого уровня
@@ -145,47 +185,95 @@ function createAnnotationsFolder(componentSet) {
         allElements.push(level1Folder);
       }
       
+      if (allElements.length === 0) return null;
+      
       // Создаем общий Frame с Auto Layout
-      if (allElements.length > 0) {
-        const mainFrame = figma.createFrame();
-        mainFrame.name = this.name;
-        mainFrame.fills = []; // Убираем фон
-        mainFrame.strokes = []; // Убираем границы
-        mainFrame.clipsContent = false;
-        
-        // Настраиваем Auto Layout
-        mainFrame.layoutMode = columnDirection === 'horizontal' ? 'VERTICAL' : 'HORIZONTAL';
-        mainFrame.itemSpacing = annotationSpacing;
-        mainFrame.primaryAxisAlignItems = 'MIN';
-        mainFrame.counterAxisAlignItems = 'MIN';
-        mainFrame.primaryAxisSizingMode = 'AUTO';
-        mainFrame.counterAxisSizingMode = 'AUTO';
-        
-        // Добавляем Frame в родительский узел
-        this.parent.appendChild(mainFrame);
-        
-        // Перемещаем все элементы в Frame
-        allElements.forEach(element => {
-          mainFrame.appendChild(element);
-        });
-        
-        // Позиционируем Frame относительно ComponentSet
-        if (componentSet) {
-          if (columnDirection === 'horizontal') {
-            // При горизонтальном направлении: нижний левый угол аннотаций = левый верхний угол компонента
-            mainFrame.x = componentSet.x + padding; // прибавляем padding к x
-            mainFrame.y = componentSet.y - mainFrame.height - annotationSpacing; // вычитаем annotationSpacing из y
-          } else {
-            // При вертикальном направлении: правый верхний угол аннотаций = левый верхний угол компонента  
-            mainFrame.x = componentSet.x - mainFrame.width - annotationSpacing; // вычитаем annotationSpacing из x
-            mainFrame.y = componentSet.y + padding; // прибавляем padding к y
-          }
+      const mainFrame = figma.createFrame();
+      mainFrame.name = this.name;
+      mainFrame.fills = []; // Убираем фон
+      mainFrame.strokes = []; // Убираем границы
+      mainFrame.clipsContent = false;
+      
+      // Настраиваем Auto Layout
+      mainFrame.layoutMode = columnDirection === 'horizontal' ? 'VERTICAL' : 'HORIZONTAL';
+      mainFrame.itemSpacing = annotationSpacing;
+      mainFrame.primaryAxisAlignItems = 'MIN';
+      mainFrame.counterAxisAlignItems = 'MIN';
+      mainFrame.primaryAxisSizingMode = 'AUTO';
+      mainFrame.counterAxisSizingMode = 'AUTO';
+      
+      // Добавляем Frame в родительский узел
+      this.parent.appendChild(mainFrame);
+      
+      // Перемещаем все элементы в Frame
+      allElements.forEach(element => {
+        mainFrame.appendChild(element);
+      });
+      
+      // Позиционируем Frame относительно ComponentSet
+      if (componentSet) {
+        if (columnDirection === 'horizontal') {
+          // При горизонтальном направлении: нижний левый угол аннотаций = левый верхний угол компонента
+          mainFrame.x = componentSet.x + padding; // прибавляем padding к x
+          mainFrame.y = componentSet.y - mainFrame.height - annotationSpacing; // вычитаем annotationSpacing из y
+        } else {
+          // При вертикальном направлении: правый верхний угол аннотаций = левый верхний угол компонента  
+          mainFrame.x = componentSet.x - mainFrame.width - annotationSpacing; // вычитаем annotationSpacing из x
+          mainFrame.y = componentSet.y + padding; // прибавляем padding к y
         }
-        
-        return mainFrame;
       }
       
-      return null;
+      return mainFrame;
+    },
+    
+    // Создание дополнительной группы аннотаций (для строк)
+    createRowAnnotationsFrame: function(columnDirection, annotationSpacing, componentSet, padding) {
+      if (this.rowAnnotations.length === 0) return null;
+      
+      const allElements = [];
+      
+      // Создаем папку для строк
+      const rowFolder = figma.group(this.rowAnnotations.concat(this.rowLines), this.parent);
+      rowFolder.name = 'Rows';
+      allElements.push(rowFolder);
+      
+      // Создаем общий Frame с Auto Layout
+      const rowFrame = figma.createFrame();
+      rowFrame.name = `${this.name} Rows`;
+      rowFrame.fills = []; // Убираем фон
+      rowFrame.strokes = []; // Убираем границы
+      rowFrame.clipsContent = false;
+      
+      // Настраиваем Auto Layout (перпендикулярно основному направлению)
+      rowFrame.layoutMode = columnDirection === 'horizontal' ? 'HORIZONTAL' : 'VERTICAL';
+      rowFrame.itemSpacing = annotationSpacing;
+      rowFrame.primaryAxisAlignItems = 'MIN';
+      rowFrame.counterAxisAlignItems = 'MIN';
+      rowFrame.primaryAxisSizingMode = 'AUTO';
+      rowFrame.counterAxisSizingMode = 'AUTO';
+      
+      // Добавляем Frame в родительский узел
+      this.parent.appendChild(rowFrame);
+      
+      // Перемещаем все элементы в Frame
+      allElements.forEach(element => {
+        rowFrame.appendChild(element);
+      });
+      
+      // Позиционируем Frame относительно ComponentSet
+      if (componentSet) {
+        if (columnDirection === 'horizontal') {
+          // При горизонтальном направлении: аннотации строк слева
+          rowFrame.x = componentSet.x - rowFrame.width - annotationSpacing; // вычитаем annotationSpacing из x
+          rowFrame.y = componentSet.y + padding; // прибавляем padding к y
+        } else {
+          // При вертикальном направлении: аннотации строк сверху
+          rowFrame.x = componentSet.x + padding; // прибавляем padding к x
+          rowFrame.y = componentSet.y - rowFrame.height - annotationSpacing; // вычитаем annotationSpacing из y
+        }
+      }
+      
+      return rowFrame;
     }
   };
   
@@ -403,7 +491,7 @@ function alignComponentVariants(
     if (groupProperties.length > 0 || columnProperty) {
       // Многоуровневая группировка
       const groups = createMultiLevelGroups(variants, groupProperties, columnProperty);
-      setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing);
+      setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing, groupProperties, columnProperty);
       
       const groupCount = Object.keys(groups).length;
       const totalColumns = Object.values(groups).reduce((max, group) => 
@@ -425,7 +513,7 @@ function alignComponentVariants(
 }
 
 // Функция для создания многоуровневого Grid layout
-function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing = 24) {
+function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing = 24, groupProperties = [], columnProperty = null) {
   const parentNode = componentSet.parent;
   const componentSetX = componentSet.x;
   const componentSetY = componentSet.y;
@@ -505,6 +593,9 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
   let currentRowY = padding;
   const annotationOffset = 15; // Отступ для аннотаций
   
+  // Набор для отслеживания созданных аннотаций строк
+  const createdRowAnnotations = new Set();
+  
   for (let rowIndex = 0; rowIndex < Math.ceil(groupKeys.length / groupsPerRow); rowIndex++) {
     const rowGroupKeys = groupKeys.slice(rowIndex * groupsPerRow, (rowIndex + 1) * groupsPerRow);
     let currentGroupX = padding;
@@ -545,6 +636,46 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           columnVariants.forEach((variant, itemIndex) => {
             variant.x = columnX;
             variant.y = currentRowY + itemIndex * (maxHeight + spacing);
+            
+            // Создаем аннотацию для строки (если включены аннотации)
+            if (showAnnotations && annotationsFolder) {
+              const rowY = currentRowY + itemIndex * (maxHeight + spacing);
+              const rowKey = `row-${rowY}`;
+              
+              if (!createdRowAnnotations.has(rowKey)) {
+                // Получаем название строки из варианта (все свойства кроме свойств группировки и колонок)
+                let rowName = '';
+                if (variant.variantProperties) {
+                  const excludeProps = [...groupProperties];
+                  if (columnProperty) excludeProps.push(columnProperty);
+                  
+                  const rowProps = Object.keys(variant.variantProperties)
+                    .filter(prop => !excludeProps.includes(prop))
+                    .sort()
+                    .map(prop => `${prop}:${variant.variantProperties[prop]}`)
+                    .join('|');
+                  
+                  rowName = rowProps || `Row ${itemIndex + 1}`;
+                }
+                
+                if (rowName && rowName !== '') {
+                  // Позиция аннотации строки слева от ComponentSet
+                  const rowAnnotationWidth = 116;
+                  const rowAnnotationX = componentSetX - annotationSpacing - rowAnnotationWidth;
+                  
+                  createGroupAnnotation(
+                    rowName,
+                    rowAnnotationX,
+                    rowY + maxHeight / 2 - 12 // Центрируем по высоте варианта
+                  ).then(annotation => {
+                    annotation.name = `annotation-row-${rowName}`;
+                    annotationsFolder.addRowAnnotation(annotation);
+                  });
+                  
+                  createdRowAnnotations.add(rowKey);
+                }
+              }
+            }
           });
         });
         
@@ -683,6 +814,46 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           columnVariants.forEach((variant, itemIndex) => {
             variant.x = currentGroupX;
             variant.y = currentColumnY + itemIndex * (maxHeight + spacing);
+            
+            // Создаем аннотацию для строки (если включены аннотации)
+            if (showAnnotations && annotationsFolder) {
+              const rowX = currentGroupX;
+              const rowKey = `row-${rowX}`;
+              
+              if (!createdRowAnnotations.has(rowKey)) {
+                // Получаем название строки из варианта (все свойства кроме свойств группировки и колонок)
+                let rowName = '';
+                if (variant.variantProperties) {
+                  const excludeProps = [...groupProperties];
+                  if (columnProperty) excludeProps.push(columnProperty);
+                  
+                  const rowProps = Object.keys(variant.variantProperties)
+                    .filter(prop => !excludeProps.includes(prop))
+                    .sort()
+                    .map(prop => `${prop}:${variant.variantProperties[prop]}`)
+                    .join('|');
+                  
+                  rowName = rowProps || `Row ${itemIndex + 1}`;
+                }
+                
+                if (rowName && rowName !== '') {
+                  // Позиция аннотации строки сверху от ComponentSet
+                  const rowAnnotationHeight = 25;
+                  const rowAnnotationY = componentSetY - annotationSpacing - rowAnnotationHeight;
+                  
+                  createGroupAnnotation(
+                    rowName,
+                    rowX + maxWidth / 2 - 50, // Центрируем по ширине варианта
+                    rowAnnotationY
+                  ).then(annotation => {
+                    annotation.name = `annotation-row-${rowName}`;
+                    annotationsFolder.addRowAnnotation(annotation);
+                  });
+                  
+                  createdRowAnnotations.add(rowKey);
+                }
+              }
+            }
           });
           
           // Переходим к следующей колонке по вертикали
