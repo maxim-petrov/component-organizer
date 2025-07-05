@@ -125,7 +125,7 @@ function createAnnotationsFolder(componentSet) {
     },
     
     // Метод для создания финальной структуры папок из всех аннотаций
-    createFinalStructure: function(columnDirection, annotationSpacing = 24) {
+    createFinalStructure: function(columnDirection, annotationSpacing = 24, componentSet = null, padding = 0) {
       if (this.level1Annotations.length === 0 && this.level2Annotations.length === 0) {
         return null;
       }
@@ -168,6 +168,19 @@ function createAnnotationsFolder(componentSet) {
         allElements.forEach(element => {
           mainFrame.appendChild(element);
         });
+        
+        // Позиционируем Frame относительно ComponentSet
+        if (componentSet) {
+          if (columnDirection === 'horizontal') {
+            // При горизонтальном направлении: нижний левый угол аннотаций = левый верхний угол компонента
+            mainFrame.x = componentSet.x + padding; // прибавляем padding к x
+            mainFrame.y = componentSet.y - mainFrame.height - annotationSpacing; // вычитаем annotationSpacing из y
+          } else {
+            // При вертикальном направлении: правый верхний угол аннотаций = левый верхний угол компонента  
+            mainFrame.x = componentSet.x - mainFrame.width - annotationSpacing; // вычитаем annotationSpacing из x
+            mainFrame.y = componentSet.y + padding; // прибавляем padding к y
+          }
+        }
         
         return mainFrame;
       }
@@ -706,7 +719,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
   // Создаем финальную структуру из всех аннотаций
   if (annotationsFolder && annotationsFolder.createFinalStructure) {
     setTimeout(() => {
-      annotationsFolder.createFinalStructure(columnDirection, annotationSpacing);
+      annotationsFolder.createFinalStructure(columnDirection, annotationSpacing, componentSet, padding);
     }, 100); // Небольшая задержка для завершения создания всех аннотаций
   }
   
@@ -754,7 +767,7 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
   // Создаем финальную структуру из всех аннотаций
   if (annotationsFolder && annotationsFolder.createFinalStructure) {
     setTimeout(() => {
-      annotationsFolder.createFinalStructure(columnDirection, annotationSpacing);
+      annotationsFolder.createFinalStructure(columnDirection, annotationSpacing, componentSet, padding);
     }, 100); // Небольшая задержка для завершения создания всех аннотаций
   }
 }
