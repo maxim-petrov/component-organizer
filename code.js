@@ -758,7 +758,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
                     rowY, // Позиционируем контейнер по верхнему краю варианта
                     columnDirection,
                     0, // ширина не важна для горизонтального направления
-                    maxHeight // высота строки (варианта)
+                    variant.height // высота конкретного варианта
                   ).then(wrapper => {
                     annotationsFolder.addRowAnnotation(wrapper);
                   });
@@ -944,7 +944,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
                     rowX, // Позиционируем контейнер по левому краю варианта
                     rowAnnotationY,
                     columnDirection,
-                    maxWidth, // ширина строки (варианта)
+                    variant.width, // ширина конкретного варианта
                     0 // высота не важна для вертикального направления
                   ).then(wrapper => {
                     annotationsFolder.addRowAnnotation(wrapper);
