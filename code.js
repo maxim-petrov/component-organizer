@@ -477,15 +477,16 @@ function alignComponentVariants(
     // Отключаем auto-layout
     componentSet.layoutMode = 'NONE';
     
-    // Удаляем существующую папку аннотаций (всегда, чтобы можно было убрать их при выключении опции)
+    // Удаляем существующие папки аннотаций (всегда, чтобы можно было убрать их при выключении опции)
     const parentNode = componentSet.parent;
     const annotationsFolderName = `${componentSet.name} annotations`;
     if (parentNode) {
-      const existingAnnotationsFolder = parentNode.children.find(child => 
-        child.name === annotationsFolderName);
-      if (existingAnnotationsFolder) {
-        existingAnnotationsFolder.remove();
-      }
+      // Ищем и удаляем все папки, которые начинаются с названия аннотаций
+      const annotationFolders = parentNode.children.filter(child => 
+        child.name === annotationsFolderName || child.name.startsWith(annotationsFolderName + ' '));
+      annotationFolders.forEach(folder => {
+        folder.remove();
+      });
     }
     
     if (groupProperties.length > 0 || columnProperty) {
