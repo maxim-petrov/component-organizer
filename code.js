@@ -688,16 +688,42 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
       
       if (columnDirection === 'horizontal') {
         // Горизонтальное расположение колонок
-        const maxItemsInGroup = Math.max(...columnKeys.map(key => group[key].length));
-        groupHeight = maxItemsInGroup * maxHeight + (maxItemsInGroup - 1) * spacing;
+        // Для каждой колонки рассчитываем реальную высоту
+        let maxColumnHeight = 0;
+        columnKeys.forEach(key => {
+          const columnVariants = group[key];
+          let columnHeight = 0;
+          columnVariants.forEach((variant, index) => {
+            columnHeight += variant.height;
+            if (index < columnVariants.length - 1) {
+              columnHeight += spacing;
+            }
+          });
+          maxColumnHeight = Math.max(maxColumnHeight, columnHeight);
+        });
+        
+        groupHeight = maxColumnHeight;
         groupWidth = columnKeys.length * maxWidth + (columnKeys.length - 1) * columnSpacing;
       } else {
         // Вертикальное расположение колонок
-        const totalItemsInGroup = columnKeys.reduce((sum, key) => sum + group[key].length, 0);
-        const totalSpacingBetweenColumns = (columnKeys.length - 1) * columnSpacing;
-        const totalSpacingBetweenItems = totalItemsInGroup - columnKeys.length; // Пробелы между элементами в каждой колонке
+        // Для каждой колонки рассчитываем реальную высоту
+        let totalGroupHeight = 0;
+        columnKeys.forEach((key, index) => {
+          const columnVariants = group[key];
+          let columnHeight = 0;
+          columnVariants.forEach((variant, vIndex) => {
+            columnHeight += variant.height;
+            if (vIndex < columnVariants.length - 1) {
+              columnHeight += spacing;
+            }
+          });
+          totalGroupHeight += columnHeight;
+          if (index < columnKeys.length - 1) {
+            totalGroupHeight += columnSpacing;
+          }
+        });
         
-        groupHeight = totalItemsInGroup * maxHeight + totalSpacingBetweenItems * spacing + totalSpacingBetweenColumns;
+        groupHeight = totalGroupHeight;
         groupWidth = maxWidth;
       }
       
@@ -763,13 +789,14 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           }
           
           // Позиционируем варианты внутри колонки
+          let currentVariantY = currentRowY;
           columnVariants.forEach((variant, itemIndex) => {
             variant.x = columnX;
-            variant.y = currentRowY + itemIndex * (maxHeight + spacing);
+            variant.y = currentVariantY;
             
             // Создаем аннотацию для строки (если включены аннотации)
             if (showAnnotations && annotationsFolder) {
-              const rowY = currentRowY + itemIndex * (maxHeight + spacing);
+              const rowY = currentVariantY;
               const rowKey = `row-${rowY}`;
               
               if (!createdRowAnnotations.has(rowKey)) {
@@ -809,6 +836,9 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
                 }
               }
             }
+            
+            // Обновляем позицию для следующего варианта
+            currentVariantY += variant.height + spacing;
           });
         });
         
@@ -950,9 +980,10 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           }
           
           // Позиционируем варианты внутри колонки
+          let currentVariantY = currentColumnY;
           columnVariants.forEach((variant, itemIndex) => {
             variant.x = currentGroupX;
-            variant.y = currentColumnY + itemIndex * (maxHeight + spacing);
+            variant.y = currentVariantY;
             
             // Создаем аннотацию для строки (если включены аннотации)
             if (showAnnotations && annotationsFolder) {
@@ -996,10 +1027,21 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
                 }
               }
             }
+            
+            // Обновляем позицию для следующего варианта
+            currentVariantY += variant.height + spacing;
           });
           
           // Переходим к следующей колонке по вертикали
-          currentColumnY += columnVariants.length * maxHeight + (columnVariants.length - 1) * spacing;
+          // Рассчитываем реальную высоту колонки
+          let columnHeight = 0;
+          columnVariants.forEach((variant, vIndex) => {
+            columnHeight += variant.height;
+            if (vIndex < columnVariants.length - 1) {
+              columnHeight += spacing;
+            }
+          });
+          currentColumnY += columnHeight;
           
           // Добавляем отступ между колонками (кроме последней)
           if (columnIndex < columnKeys.length - 1) {
@@ -1060,9 +1102,13 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
     if (variant.height > maxHeight) maxHeight = variant.height;
   });
   
+  let currentY = padding;
   variants.forEach((variant, index) => {
     variant.x = padding;
-    variant.y = padding + index * (maxHeight + spacing);
+    variant.y = currentY;
+    
+    // Обновляем позицию для следующего варианта
+    currentY += variant.height + spacing;
     
     // Создаем аннотацию для варианта в зависимости от направления (если включены аннотации)
     if (showAnnotations && annotationsFolder) {
@@ -1073,7 +1119,15 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
   });
   
   const totalWidth = maxWidth + 2 * padding; // Аннотации теперь располагаются за пределами ComponentSet
-  const totalHeight = variants.length * maxHeight + (variants.length - 1) * spacing + 2 * padding;
+  // Рассчитываем реальную высоту всех вариантов
+  let totalVariantsHeight = 0;
+  variants.forEach((variant, index) => {
+    totalVariantsHeight += variant.height;
+    if (index < variants.length - 1) {
+      totalVariantsHeight += spacing;
+    }
+  });
+  const totalHeight = totalVariantsHeight + 2 * padding;
   
   componentSet.resize(totalWidth, totalHeight);
   
