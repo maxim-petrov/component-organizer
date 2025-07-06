@@ -703,7 +703,20 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
         });
         
         groupHeight = maxColumnHeight;
-        groupWidth = columnKeys.length * maxWidth + (columnKeys.length - 1) * columnSpacing;
+        // Рассчитываем реальную ширину каждой колонки
+        let totalGroupWidth = 0;
+        columnKeys.forEach((key, index) => {
+          const columnVariants = group[key];
+          let maxColumnWidth = 0;
+          columnVariants.forEach(variant => {
+            maxColumnWidth = Math.max(maxColumnWidth, variant.width);
+          });
+          totalGroupWidth += maxColumnWidth;
+          if (index < columnKeys.length - 1) {
+            totalGroupWidth += columnSpacing;
+          }
+        });
+        groupWidth = totalGroupWidth;
       } else {
         // Вертикальное расположение колонок
         // Для каждой колонки рассчитываем реальную высоту
@@ -724,7 +737,15 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
         });
         
         groupHeight = totalGroupHeight;
-        groupWidth = maxWidth;
+        // Рассчитываем максимальную ширину среди всех вариантов в группе
+        let maxGroupWidth = 0;
+        columnKeys.forEach(key => {
+          const columnVariants = group[key];
+          columnVariants.forEach(variant => {
+            maxGroupWidth = Math.max(maxGroupWidth, variant.width);
+          });
+        });
+        groupWidth = maxGroupWidth;
       }
       
       rowHeight = Math.max(rowHeight, groupHeight);
@@ -760,9 +781,10 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
       
       if (columnDirection === 'horizontal') {
         // Горизонтальное расположение колонок - аннотации сверху
+        let currentColumnX = currentGroupX;
         columnKeys.forEach((columnKey, columnIndex) => {
           const columnVariants = group[columnKey];
-          const columnX = currentGroupX + columnIndex * (maxWidth + columnSpacing);
+          const columnX = currentColumnX;
           
           // Создаем аннотацию для колонки сверху (если включены аннотации, есть название колонки и она еще не создана в этой позиции)
           if (showAnnotations && columnKey !== 'default' && annotationsFolder && !createdAnnotations.has(`column-pos-${columnX}`)) {
@@ -772,13 +794,19 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             const level3Y = componentSetY - annotationSpacing - variantAnnotationHeight; // позиция ВЕРХНЕЙ границы аннотации варианта
             const level2Y = level3Y - annotationSpacing - columnAnnotationHeight; // позиция ВЕРХНЕЙ границы аннотации колонки
             
+            // Рассчитываем реальную ширину колонки
+            let realColumnWidth = 0;
+            columnVariants.forEach(variant => {
+              realColumnWidth = Math.max(realColumnWidth, variant.width);
+            });
+            
             // Создаем обернутую аннотацию с шириной колонки
             createWrappedColumnAnnotation(
               columnKey,
               columnX,
               level2Y,
               columnDirection,
-              maxWidth, // ширина колонки
+              realColumnWidth, // реальная ширина колонки
               0 // высота не важна для горизонтального направления
             ).then(wrapper => {
               annotationsFolder.addLevel1Annotation(wrapper);
@@ -840,9 +868,29 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             // Обновляем позицию для следующего варианта
             currentVariantY += variant.height + spacing;
           });
+          
+          // Обновляем позицию для следующей колонки
+          let realColumnWidth = 0;
+          columnVariants.forEach(variant => {
+            realColumnWidth = Math.max(realColumnWidth, variant.width);
+          });
+          currentColumnX += realColumnWidth + columnSpacing;
         });
         
-        groupWidth = columnKeys.length * maxWidth + (columnKeys.length - 1) * columnSpacing;
+        // Рассчитываем реальную ширину группы
+        let totalGroupWidth = 0;
+        columnKeys.forEach((key, index) => {
+          const columnVariants = group[key];
+          let maxColumnWidth = 0;
+          columnVariants.forEach(variant => {
+            maxColumnWidth = Math.max(maxColumnWidth, variant.width);
+          });
+          totalGroupWidth += maxColumnWidth;
+          if (index < columnKeys.length - 1) {
+            totalGroupWidth += columnSpacing;
+          }
+        });
+        groupWidth = totalGroupWidth;
         
         // Создаем аннотацию для группы сверху по центру (если включены аннотации, есть название группы и она еще не создана)
         if (showAnnotations && groupKey !== 'default' && annotationsFolder && !createdAnnotations.has(`group-${groupKey}`)) {
@@ -982,6 +1030,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           // Позиционируем варианты внутри колонки
           let currentVariantY = currentColumnY;
           columnVariants.forEach((variant, itemIndex) => {
+            // Выравниваем по левому краю группы
             variant.x = currentGroupX;
             variant.y = currentVariantY;
             
@@ -1049,7 +1098,15 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           }
         });
         
-        groupWidth = maxWidth;
+        // Рассчитываем максимальную ширину среди всех вариантов в группе
+        let maxGroupWidth = 0;
+        columnKeys.forEach(key => {
+          const columnVariants = group[key];
+          columnVariants.forEach(variant => {
+            maxGroupWidth = Math.max(maxGroupWidth, variant.width);
+          });
+        });
+        groupWidth = maxGroupWidth;
       }
       
       // Обновляем позицию для следующей группы в строке
