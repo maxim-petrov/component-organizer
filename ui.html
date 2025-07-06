@@ -240,8 +240,14 @@
     
     .buttons {
       display: flex;
+      flex-direction: column;
       gap: 8px;
       margin-top: 8px;
+    }
+    
+    .button-row {
+      display: flex;
+      gap: 8px;
     }
     
     .button {
@@ -265,6 +271,21 @@
     }
     
     .button-primary:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+    
+    .button-preset {
+      background: #7B29E5;
+      color: white;
+      margin-bottom: 8px;
+    }
+    
+    .button-preset:hover {
+      background: #6A1FB3;
+    }
+    
+    .button-preset:disabled {
       background: #cccccc;
       cursor: not-allowed;
     }
@@ -429,12 +450,15 @@
       <div class="feature">Синхронная сортировка внутри групп</div>
       <div class="feature">Автоматический расчет размеров</div>
       <div class="feature">Умные аннотации с линиями границ групп</div>
-      <div class="feature">Сохранение настроек для каждого компонента</div>
+      <div class="feature">Предустановки для Accordion и Alert компонентов</div>
     </div>
     
     <div class="buttons">
-      <button class="button button-primary" id="align-btn" disabled>Выровнять</button>
-      <button class="button button-secondary" id="cancel-btn">Отмена</button>
+      <button class="button button-preset" id="preset-btn" disabled style="display: none;">Применить предустановку</button>
+      <div class="button-row">
+        <button class="button button-primary" id="align-btn" disabled>Выровнять</button>
+        <button class="button button-secondary" id="cancel-btn">Отмена</button>
+      </div>
     </div>
   </div>
 
@@ -497,6 +521,7 @@
       const infoDetails = document.getElementById('info-details');
       const groupingSection = document.getElementById('grouping-section');
       const alignBtn = document.getElementById('align-btn');
+      const presetBtn = document.getElementById('preset-btn');
       const refreshBtn = document.getElementById('refresh-properties-btn');
       const groupPropertiesList = document.getElementById('group-properties-list');
       const columnPropertySelect = document.getElementById('column-property-select');
@@ -506,10 +531,10 @@
       if (data.hasValidSelection) {
         infoContainer.className = 'selection-info';
         
-        // Показываем статус сохраненных настроек
-        const settingsStatus = data.savedSettings ? ' • настройки сохранены' : ' • новый компонент';
+        // Показываем статус предустановки
+        const presetStatus = data.preset ? ' • есть предустановка' : ' • стандартный компонент';
         infoTitle.textContent = `📦 ${data.componentSetName}`;
-        infoDetails.textContent = `${data.variantCount} вариантов • ${data.properties.length} свойств${settingsStatus}`;
+        infoDetails.textContent = `${data.variantCount} вариантов • ${data.properties.length} свойств${presetStatus}`;
         
         groupingSection.classList.remove('disabled');
         alignBtn.disabled = false;
@@ -517,12 +542,17 @@
         groupPropertiesList.classList.remove('disabled');
         columnPropertySelect.disabled = false;
         
-        updatePropertiesControls(data.properties);
-        
-        // Загружаем сохраненные настройки
-        if (data.savedSettings) {
-          loadSettingsToUI(data.savedSettings);
+        // Показываем кнопку предустановки если есть предустановка
+        if (data.preset) {
+          presetBtn.style.display = 'block';
+          presetBtn.disabled = false;
+          // Загружаем предустановку в UI
+          loadSettingsToUI(data.preset);
+        } else {
+          presetBtn.style.display = 'none';
         }
+        
+        updatePropertiesControls(data.properties);
       } else {
         infoContainer.className = 'selection-info no-selection';
         infoTitle.textContent = 'Выберите компонент';
@@ -530,6 +560,7 @@
         
         groupingSection.classList.add('disabled');
         alignBtn.disabled = true;
+        presetBtn.style.display = 'none';
         refreshBtn.disabled = true;
         groupPropertiesList.classList.add('disabled');
         columnPropertySelect.disabled = true;
@@ -607,6 +638,18 @@
     }
     
     // Обработчики событий
+    document.getElementById('preset-btn').addEventListener('click', () => {
+      if (!hasValidSelection) {
+        return;
+      }
+      
+      parent.postMessage({ 
+        pluginMessage: { 
+          type: 'apply-preset'
+        } 
+      }, '*');
+    });
+    
     document.getElementById('align-btn').addEventListener('click', () => {
       if (!hasValidSelection) {
         return;

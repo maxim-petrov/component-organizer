@@ -1,6 +1,51 @@
 // Плагин для выравнивания вариантов компонента
 figma.showUI(__html__, { width: 360, height: 620 });
 
+// Предустановленные настройки для компонентов
+const componentPresets = {
+  'AccordionRow v2': {
+    padding: 40,
+    spacing: 20,
+    columnSpacing: 40,
+    groupSpacing: 80,
+    groupsPerRow: 2,
+    columnDirection: 'horizontal',
+    groupProperties: ['Opened', 'Align'],
+    columnProperty: 'Type',
+    showAnnotations: true,
+    annotationSpacing: 24
+  },
+  'Accordion Group v2': {
+    padding: 20,
+    spacing: 16,
+    columnSpacing: 16,
+    groupSpacing: 40,
+    groupsPerRow: 3,
+    columnDirection: 'vertical',
+    groupProperties: ['Type'],
+    columnProperty: null,
+    showAnnotations: false,
+    annotationSpacing: 24
+  },
+  'Alert': {
+    padding: 20,
+    spacing: 40,
+    columnSpacing: 80,
+    groupSpacing: 160,
+    groupsPerRow: 2,
+    columnDirection: 'horizontal',
+    groupProperties: ['Type'],
+    columnProperty: 'Info Type',
+    showAnnotations: true,
+    annotationSpacing: 24
+  }
+};
+
+// Функция для получения предустановок для компонента
+function getComponentPreset(componentName) {
+  return componentPresets[componentName] || null;
+}
+
 // Функция для получения всех доступных свойств вариантов
 function getVariantProperties(componentSet) {
   const variants = componentSet.children.filter(child => child.type === 'COMPONENT');
@@ -36,10 +81,6 @@ function getComponentSetFromSelection() {
   return null;
 }
 
-
-
-
-
 // Функция для отправки информации о текущем выделении в UI
 function updateSelectionInfo() {
   const componentSet = getComponentSetFromSelection();
@@ -47,6 +88,7 @@ function updateSelectionInfo() {
   if (componentSet) {
     const properties = getVariantProperties(componentSet);
     const variantCount = componentSet.children.filter(child => child.type === 'COMPONENT').length;
+    const preset = getComponentPreset(componentSet.name);
     
     figma.ui.postMessage({ 
       type: 'selection-updated', 
@@ -54,7 +96,8 @@ function updateSelectionInfo() {
         componentSetName: componentSet.name,
         properties: properties,
         variantCount: variantCount,
-        hasValidSelection: true
+        hasValidSelection: true,
+        preset: preset
       }
     });
   } else {
@@ -64,7 +107,8 @@ function updateSelectionInfo() {
         componentSetName: null,
         properties: [],
         variantCount: 0,
-        hasValidSelection: false
+        hasValidSelection: false,
+        preset: null
       }
     });
   }
@@ -279,8 +323,6 @@ function createAnnotationsFolder(componentSet) {
   
   return annotationsContainer;
 }
-
-
 
 // Функция для создания линии аннотации
 function createAnnotationLine(startX, startY, endX, endY, annotationsFolder) {
@@ -1052,6 +1094,36 @@ figma.on('selectionchange', () => {
 figma.ui.onmessage = (msg) => {
   if (msg.type === 'get-properties') {
     updateSelectionInfo();
+  }
+  
+  if (msg.type === 'apply-preset') {
+    const componentSet = getComponentSetFromSelection();
+    
+    if (!componentSet) {
+      figma.notify('Выберите набор компонентов');
+      return;
+    }
+
+    const preset = getComponentPreset(componentSet.name);
+    
+    if (!preset) {
+      figma.notify('Нет предустановки для этого компонента');
+      return;
+    }
+
+    alignComponentVariants(
+      componentSet, 
+      preset.padding, 
+      preset.spacing, 
+      preset.columnSpacing, 
+      preset.groupSpacing, 
+      preset.groupsPerRow,
+      preset.columnDirection,
+      preset.groupProperties, 
+      preset.columnProperty,
+      preset.showAnnotations,
+      preset.annotationSpacing
+    );
   }
   
   if (msg.type === 'align-variants') {
