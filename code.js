@@ -453,7 +453,6 @@ async function createWrappedColumnAnnotation(text, x, y, columnDirection, column
     container.counterAxisAlignItems = 'MIN'; // Выравниваем по верху
     container.primaryAxisSizingMode = 'FIXED'; // Фиксированная ширина
     container.counterAxisSizingMode = 'AUTO'; // Высота по содержимому
-    container.resize(columnWidth, 50); // Временная высота, Auto Layout подстроит
   } else {
     // Вертикальное направление: контейнер должен быть высотой как колонка
     container.layoutMode = 'VERTICAL';
