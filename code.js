@@ -359,6 +359,7 @@ function createAnnotationLine(startX, startY, endX, endY, annotationsFolder) {
   line.strokeJoin = "ROUND"; // Закругленные соединения
   line.cornerRadius = 6; // Скругление углов на загибах
   line.fills = []; // Убираем заливку
+  line.name = 'Annotation Line';
   
   // Добавляем линию в папку аннотаций
   if (annotationsFolder) {
