@@ -460,8 +460,8 @@ async function createWrappedColumnAnnotation(text, x, y, columnDirection, column
     container.primaryAxisAlignItems = 'CENTER'; // Центрируем по вертикали
     container.counterAxisAlignItems = 'MIN'; // Выравниваем по левому краю
     container.primaryAxisSizingMode = 'FIXED'; // Фиксированная высота
-    container.counterAxisSizingMode = 'AUTO'; // Ширина по содержимому
     container.resize(200, columnHeight); // Временная ширина, Auto Layout подстроит
+    container.counterAxisSizingMode = 'AUTO'; // Ширина по содержимому
   }
   
   // Добавляем аннотацию в контейнер
@@ -494,8 +494,8 @@ async function createWrappedRowAnnotation(text, x, y, columnDirection, rowWidth,
     container.primaryAxisAlignItems = 'CENTER'; // Центрируем по вертикали
     container.counterAxisAlignItems = 'MIN'; // Выравниваем по левому краю
     container.primaryAxisSizingMode = 'FIXED'; // Фиксированная высота
-    container.counterAxisSizingMode = 'AUTO'; // Ширина по содержимому
     container.resize(200, rowHeight); // Временная ширина, Auto Layout подстроит
+    container.counterAxisSizingMode = 'AUTO'; // Ширина по содержимому
   } else {
     // Вертикальное направление: контейнер должен быть шириной как строка (вариант)
     container.layoutMode = 'HORIZONTAL';
