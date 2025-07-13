@@ -152,7 +152,8 @@ function createAnnotationsFolder(componentSet) {
     // Основные аннотации
     level1Annotations: [], // колонки
     level2Annotations: [], // группы
-    lines: [], // линии
+    level1Lines: [], // линии
+    level2Lines: [], // линии
     // Дополнительные аннотации
     rowAnnotations: [], // строки
     rowLines: [], // линии для строк
@@ -167,8 +168,8 @@ function createAnnotationsFolder(componentSet) {
       this.parent.appendChild(annotation);
     },
     
-    addLine: function(line) {
-      this.lines.push(line);
+    addLevel2Line: function(line) {
+      this.level2Lines.push(line);
       this.parent.appendChild(line);
     },
     
@@ -218,7 +219,7 @@ function createAnnotationsFolder(componentSet) {
       
       // Создаем папки для каждого уровня только если есть аннотации этого уровня
       if (this.level2Annotations.length > 0) {
-        const level2Folder = figma.group(this.level2Annotations.concat(this.lines), this.parent);
+        const level2Folder = figma.group(this.level2Annotations.concat(this.level2Lines), this.parent);
         level2Folder.name = 'Level 2';
         allElements.push(level2Folder);
       }
@@ -363,7 +364,7 @@ function createAnnotationLine(startX, startY, endX, endY, annotationsFolder) {
   
   // Добавляем линию в папку аннотаций
   if (annotationsFolder) {
-    annotationsFolder.addLine(line);
+    annotationsFolder.addLevel2Line(line);
   }
   
   return line;
