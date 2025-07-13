@@ -167,6 +167,11 @@ function createAnnotationsFolder(componentSet) {
       this.level2Annotations.push(annotation);
       this.parent.appendChild(annotation);
     },
+
+    addLevel1Line: function(line) {
+      this.level1Lines.push(line);
+      this.parent.appendChild(line);
+    },
     
     addLevel2Line: function(line) {
       this.level2Lines.push(line);
