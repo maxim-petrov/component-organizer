@@ -945,7 +945,14 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
         let totalGroupHeight = 0;
         columnKeys.forEach((columnKey, columnIndex) => {
           const columnVariants = group[columnKey];
-          const columnHeight = columnVariants.length * maxHeight + (columnVariants.length - 1) * spacing;
+          // Рассчитываем реальную высоту колонки
+          let columnHeight = 0;
+          columnVariants.forEach((variant, vIndex) => {
+            columnHeight += variant.height;
+            if (vIndex < columnVariants.length - 1) {
+              columnHeight += spacing;
+            }
+          });
           totalGroupHeight += columnHeight;
           
           // Добавляем отступ между колонками (кроме последней)
@@ -1009,8 +1016,14 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             const level3X = componentSetX - annotationSpacing - variantAnnotationWidth; // позиция ЛЕВОЙ границы аннотации варианта
             const level2X = level3X - annotationSpacing - columnAnnotationWidth; // позиция ЛЕВОЙ границы аннотации колонки
             
-            // Рассчитываем высоту колонки
-            const columnHeight = columnVariants.length * maxHeight + (columnVariants.length - 1) * spacing;
+            // Рассчитываем реальную высоту колонки
+            let columnHeight = 0;
+            columnVariants.forEach((variant, vIndex) => {
+              columnHeight += variant.height;
+              if (vIndex < columnVariants.length - 1) {
+                columnHeight += spacing;
+              }
+            });
             
             // Создаем обернутую аннотацию с высотой колонки
             createWrappedColumnAnnotation(
