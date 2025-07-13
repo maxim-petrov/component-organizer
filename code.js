@@ -793,7 +793,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           const columnVariants = group[columnKey];
           const columnX = currentColumnX;
           
-          // Создаем аннотацию для колонки сверху (если включены аннотации, есть название колонки и она еще не создана в этой позиции)
+          // Создаем аннотацию для колонки сверху (Направление колонок внутри групп: По горизонтали) (если включены аннотации, есть название колонки и она еще не создана в этой позиции)
           if (showAnnotations && columnKey !== 'default' && annotationsFolder && !createdAnnotations.has(`column-pos-${columnX}`)) {
             // Рассчитываем позицию уровня 2 с правильными отступами 24px
             const variantAnnotationHeight = 25; // примерная высота рамки (hug content адаптируется)
@@ -817,6 +817,21 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
               0 // высота не важна для горизонтального направления
             ).then(wrapper => {
               annotationsFolder.addLevel1Annotation(wrapper);
+
+              // Создаем горизонтальную линию под аннотацией колонки
+              const lineCenterY = level2Y + wrapper.height / 2;
+              const columnStartX = columnX;
+              const columnEndX = columnX + realColumnWidth;
+              
+              const columnLine = createAnnotationLine(
+                columnStartX,
+                lineCenterY,
+                columnEndX,
+                lineCenterY,
+                null // не добавляем в annotationsFolder.addLine(), используем addLevel1Line
+              );
+              
+              annotationsFolder.addLevel1Line(columnLine);
             });
             
             // Отмечаем, что аннотация для этой позиции уже создана
@@ -967,7 +982,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           }
         });
         
-        // Создаем аннотацию для группы слева по центру (если включены аннотации, есть название группы и она еще не создана)
+        // Создаем аннотацию для группы слева по центру (Направление колонок внутри групп: По вертикали) (если включены аннотации, есть название группы и она еще не создана)
         if (showAnnotations && groupKey !== 'default' && annotationsFolder && !createdAnnotations.has(`group-${groupKey}`)) {
           const groupCenterY = groupStartY + totalGroupHeight / 2;
           // Сохраняем значения в локальных переменных для использования в .then()
