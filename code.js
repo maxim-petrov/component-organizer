@@ -230,7 +230,7 @@ function createAnnotationsFolder(componentSet) {
       }
       
       if (this.level1Annotations.length > 0) {
-        const level1Folder = figma.group(this.level1Annotations, this.parent);
+        const level1Folder = figma.group(this.level1Annotations.concat(this.level1Lines), this.parent);
         level1Folder.name = 'Level 1';
         allElements.push(level1Folder);
       }
