@@ -59,4 +59,9 @@ coverage/
 
 # Personal notes and context files
 context.txt
-prompt.txt 
+prompt.txt
+
+# Build output
+dist/
+*.min.js
+*.min.css 
