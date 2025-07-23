@@ -1,0 +1,29 @@
+{
+  "name": "figma-component-variants-alignment",
+  "version": "1.0.0",
+  "description": "Плагин Figma для выравнивания вариантов компонентов с группировкой и аннотациями",
+  "main": "code.js",
+  "scripts": {
+    "build": "node build.js",
+    "dev": "node build.js --watch",
+    "watch": "node build.js --watch"
+  },
+  "keywords": [
+    "figma",
+    "plugin",
+    "components",
+    "variants",
+    "alignment",
+    "grid"
+  ],
+  "author": "Developer",
+  "license": "MIT",
+  "devDependencies": {},
+  "engines": {
+    "node": ">=12.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "."
+  }
+} 
