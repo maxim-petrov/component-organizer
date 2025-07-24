@@ -7,7 +7,7 @@ figma.showUI(__html__, { width: 360, height: 620 });
 
 // Предустановки компонентов - загружаются из presets.js
 let componentPresets = {};
-let getComponentPreset, getAllPresets, addComponentPreset;
+let getComponentPreset, getComponentGroup, getAllPresets, getAllGroups, addComponentPreset;
 
 // Функция для загрузки предустановок
 function loadPresets() {
@@ -17,63 +17,230 @@ function loadPresets() {
     
     // Fallback: определяем предустановки локально если внешний файл недоступен
     componentPresets = {
-      'AccordionRow v2': {
-        padding: 40,
-        spacing: 20,
-        columnSpacing: 40,
-        groupSpacing: 80,
-        groupsPerRow: 2,
-        columnDirection: 'horizontal',
-        groupProperties: ['Opened', 'Align'],
-        columnProperty: 'Type',
-        showAnnotations: true,
-        annotationSpacing: 24
+      // Группы многосоставных компонентов
+      groups: {
+        'Accordion': {
+          name: 'Accordion',
+          description: 'Компоненты аккордеона',
+          components: {
+            'AccordionRow v2': {
+              padding: 140,
+              spacing: 20,
+              columnSpacing: 40,
+              groupSpacing: 80,
+              groupsPerRow: 2,
+              columnDirection: 'horizontal',
+              groupProperties: ['Opened', 'Align'],
+              columnProperty: 'Type',
+              showAnnotations: true,
+              annotationSpacing: 24
+            },
+            'Accordion Group v2': {
+              padding: 20,
+              spacing: 16,
+              columnSpacing: 16,
+              groupSpacing: 40,
+              groupsPerRow: 3,
+              columnDirection: 'vertical',
+              groupProperties: ['Type'],
+              columnProperty: null,
+              showAnnotations: false,
+              annotationSpacing: 24
+            }
+          }
+        },
+        'Input': {
+          name: 'Input',
+          description: 'Компоненты ввода данных',
+          components: {
+            'Input': {
+              padding: 20,
+              spacing: 16,
+              columnSpacing: 40,
+              groupSpacing: 80,
+              groupsPerRow: 3,
+              columnDirection: 'horizontal',
+              groupProperties: ['State', 'Size'],
+              columnProperty: 'Type',
+              showAnnotations: true,
+              annotationSpacing: 24
+            },
+            'Phone Input': {
+              padding: 20,
+              spacing: 16,
+              columnSpacing: 40,
+              groupSpacing: 80,
+              groupsPerRow: 2,
+              columnDirection: 'horizontal',
+              groupProperties: ['State'],
+              columnProperty: 'Size',
+              showAnnotations: true,
+              annotationSpacing: 24
+            },
+            'Masked Input': {
+              padding: 20,
+              spacing: 16,
+              columnSpacing: 40,
+              groupSpacing: 80,
+              groupsPerRow: 2,
+              columnDirection: 'horizontal',
+              groupProperties: ['State'],
+              columnProperty: 'Type',
+              showAnnotations: true,
+              annotationSpacing: 24
+            },
+            'Number Input': {
+              padding: 20,
+              spacing: 16,
+              columnSpacing: 40,
+              groupSpacing: 80,
+              groupsPerRow: 3,
+              columnDirection: 'horizontal',
+              groupProperties: ['State'],
+              columnProperty: 'Size',
+              showAnnotations: true,
+              annotationSpacing: 24
+            },
+            'Password Input': {
+              padding: 20,
+              spacing: 16,
+              columnSpacing: 40,
+              groupSpacing: 80,
+              groupsPerRow: 2,
+              columnDirection: 'horizontal',
+              groupProperties: ['State', 'Visibility'],
+              columnProperty: 'Size',
+              showAnnotations: true,
+              annotationSpacing: 24
+            },
+            'Custom Input': {
+              padding: 20,
+              spacing: 16,
+              columnSpacing: 40,
+              groupSpacing: 80,
+              groupsPerRow: 2,
+              columnDirection: 'horizontal',
+              groupProperties: ['State'],
+              columnProperty: 'Type',
+              showAnnotations: true,
+              annotationSpacing: 24
+            }
+          }
+        }
       },
-      'Accordion Group v2': {
-        padding: 20,
-        spacing: 16,
-        columnSpacing: 16,
-        groupSpacing: 40,
-        groupsPerRow: 3,
-        columnDirection: 'vertical',
-        groupProperties: ['Type'],
-        columnProperty: null,
-        showAnnotations: false,
-        annotationSpacing: 24
-      },
-      'Alert': {
-        padding: 20,
-        spacing: 40,
-        columnSpacing: 80,
-        groupSpacing: 160,
-        groupsPerRow: 2,
-        columnDirection: 'horizontal',
-        groupProperties: ['Type'],
-        columnProperty: 'Info Type',
-        showAnnotations: true,
-        annotationSpacing: 24
+
+      // Одиночные компоненты (не многосоставные)
+      components: {
+        'Alert': {
+          padding: 20,
+          spacing: 40,
+          columnSpacing: 80,
+          groupSpacing: 160,
+          groupsPerRow: 2,
+          columnDirection: 'horizontal',
+          groupProperties: ['Type'],
+          columnProperty: 'Info Type',
+          showAnnotations: true,
+          annotationSpacing: 24
+        },
+        'Avatar': {
+          padding: 16,
+          spacing: 20,
+          columnSpacing: 40,
+          groupSpacing: 80,
+          groupsPerRow: 4,
+          columnDirection: 'horizontal',
+          groupProperties: ['State'],
+          columnProperty: 'Size',
+          showAnnotations: true,
+          annotationSpacing: 24
+        }
       }
     };
 
     // Функции для работы с предустановками
     getComponentPreset = function(componentName) {
-      return componentPresets[componentName] || null;
+      // Сначала ищем среди одиночных компонентов
+      if (componentPresets.components && componentPresets.components[componentName]) {
+        return componentPresets.components[componentName];
+      }
+
+      // Затем ищем среди групп
+      if (componentPresets.groups) {
+        for (const groupKey in componentPresets.groups) {
+          const group = componentPresets.groups[groupKey];
+          if (group.components && group.components[componentName]) {
+            return group.components[componentName];
+          }
+        }
+      }
+
+      return null;
+    };
+
+    getComponentGroup = function(componentName) {
+      if (componentPresets.groups) {
+        for (const groupKey in componentPresets.groups) {
+          const group = componentPresets.groups[groupKey];
+          if (group.components && group.components[componentName]) {
+            return {
+              key: groupKey,
+              name: group.name,
+              description: group.description,
+              components: Object.keys(group.components)
+            };
+          }
+        }
+      }
+      return null;
     };
 
     getAllPresets = function() {
-      return componentPresets;
+      const allPresets = {};
+      
+      // Добавляем одиночные компоненты
+      if (componentPresets.components) {
+        Object.assign(allPresets, componentPresets.components);
+      }
+      
+      // Добавляем компоненты из групп
+      if (componentPresets.groups) {
+        for (const groupKey in componentPresets.groups) {
+          const group = componentPresets.groups[groupKey];
+          if (group.components) {
+            Object.assign(allPresets, group.components);
+          }
+        }
+      }
+      
+      return allPresets;
     };
 
-    addComponentPreset = function(componentName, preset) {
-      componentPresets[componentName] = preset;
+    getAllGroups = function() {
+      return componentPresets.groups || {};
+    };
+
+    addComponentPreset = function(componentName, preset, groupName = null) {
+      if (groupName && componentPresets.groups && componentPresets.groups[groupName]) {
+        // Добавляем в группу
+        componentPresets.groups[groupName].components[componentName] = preset;
+      } else {
+        // Добавляем как одиночный компонент
+        if (!componentPresets.components) {
+          componentPresets.components = {};
+        }
+        componentPresets.components[componentName] = preset;
+      }
     };
 
   } catch (error) {
     console.error('Ошибка загрузки предустановок:', error);
     // Устанавливаем пустые предустановки в случае ошибки
-    componentPresets = {};
+    componentPresets = { groups: {}, components: {} };
     getComponentPreset = () => null;
+    getComponentGroup = () => null;
     getAllPresets = () => ({});
+    getAllGroups = () => ({});
     addComponentPreset = () => {};
   }
 }
@@ -124,6 +291,7 @@ function updateSelectionInfo() {
     const properties = getVariantProperties(componentSet);
     const variantCount = componentSet.children.filter(child => child.type === 'COMPONENT').length;
     const preset = getComponentPreset(componentSet.name);
+    const group = getComponentGroup(componentSet.name);
     
     figma.ui.postMessage({ 
       type: 'selection-updated', 
@@ -132,7 +300,8 @@ function updateSelectionInfo() {
         properties: properties,
         variantCount: variantCount,
         hasValidSelection: true,
-        preset: preset
+        preset: preset,
+        group: group
       }
     });
   } else {
@@ -143,7 +312,8 @@ function updateSelectionInfo() {
         properties: [],
         variantCount: 0,
         hasValidSelection: false,
-        preset: null
+        preset: null,
+        group: null
       }
     });
   }

@@ -531,10 +531,19 @@
       if (data.hasValidSelection) {
         infoContainer.className = 'selection-info';
         
-        // Показываем статус предустановки
+        // Показываем статус предустановки и информацию о группе
         const presetStatus = data.preset ? ' • есть предустановка' : ' • стандартный компонент';
-        infoTitle.textContent = `📦 ${data.componentSetName}`;
-        infoDetails.textContent = `${data.variantCount} вариантов • ${data.properties.length} свойств${presetStatus}`;
+        const groupStatus = data.group ? ` • группа: ${data.group.name}` : '';
+        infoTitle.textContent = `📦 ${data.componentSetName}${groupStatus}`;
+        
+        let detailsText = `${data.variantCount} вариантов • ${data.properties.length} свойств${presetStatus}`;
+        if (data.group && data.group.components.length > 1) {
+          const otherComponents = data.group.components.filter(comp => comp !== data.componentSetName);
+          if (otherComponents.length > 0) {
+            detailsText += `\nДругие компоненты группы: ${otherComponents.join(', ')}`;
+          }
+        }
+        infoDetails.textContent = detailsText;
         
         groupingSection.classList.remove('disabled');
         alignBtn.disabled = false;
