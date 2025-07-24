@@ -1,112 +1,172 @@
-// Предустановленные настройки для компонентов с поддержкой группировки
+// Предустановленные настройки для компонентов с поддержкой группировки по Desktop/Mobile
 const componentPresets = {
   // Группы многосоставных компонентов
   groups: {
     'Accordion': {
       name: 'Accordion',
       description: 'Компоненты аккордеона',
-      components: {
-        'AccordionRow v2': {
-          padding: 140,
-          spacing: 20,
-          columnSpacing: 40,
-          groupSpacing: 80,
-          groupsPerRow: 2,
-          columnDirection: 'horizontal',
-          groupProperties: ['Opened', 'Align'],
-          columnProperty: 'Type',
-          showAnnotations: true,
-          annotationSpacing: 24
-        },
-        'Accordion Group v2': {
-          padding: 20,
-          spacing: 16,
-          columnSpacing: 16,
-          groupSpacing: 40,
-          groupsPerRow: 3,
-          columnDirection: 'vertical',
-          groupProperties: ['Type'],
-          columnProperty: null,
-          showAnnotations: false,
-          annotationSpacing: 24
+      'Desktop': {
+        components: {
+          'AccordionRow v2': {
+            padding: 140,
+            spacing: 20,
+            columnSpacing: 40,
+            groupSpacing: 80,
+            groupsPerRow: 2,
+            columnDirection: 'horizontal',
+            groupProperties: ['Opened', 'Align'],
+            columnProperty: 'Type',
+            showAnnotations: true,
+            annotationSpacing: 24
+          },
+          'Accordion Group v2': {
+            padding: 20,
+            spacing: 16,
+            columnSpacing: 16,
+            groupSpacing: 40,
+            groupsPerRow: 3,
+            columnDirection: 'vertical',
+            groupProperties: ['Type'],
+            columnProperty: null,
+            showAnnotations: false,
+            annotationSpacing: 24
+          }
+        }
+      },
+      'Mobile': {
+        components: {
+          'Accordion v2': {
+            padding: 60,
+            spacing: 10,
+            columnSpacing: 40,
+            groupSpacing: 80,
+            groupsPerRow: 2,
+            columnDirection: 'horizontal',
+            groupProperties: ['Opened', 'Align'],
+            columnProperty: 'Type',
+            showAnnotations: true,
+            annotationSpacing: 24
+          },
+          'Accordion Group v2': {
+            padding: 20,
+            spacing: 10,
+            columnSpacing: 40,
+            groupSpacing: 80,
+            groupsPerRow: 2,
+            columnDirection: 'horizontal',
+            groupProperties: ['Opened', 'Align'],
+            columnProperty: 'Type',
+            showAnnotations: true,
+            annotationSpacing: 24
+          }
         }
       }
     },
     'Input': {
       name: 'Input',
       description: 'Компоненты ввода данных',
-      components: {
-        'Input': {
-          padding: 20,
-          spacing: 16,
-          columnSpacing: 40,
-          groupSpacing: 80,
-          groupsPerRow: 3,
-          columnDirection: 'horizontal',
-          groupProperties: ['State', 'Size'],
-          columnProperty: 'Type',
-          showAnnotations: true,
-          annotationSpacing: 24
-        },
-        'Phone Input': {
-          padding: 20,
-          spacing: 16,
-          columnSpacing: 40,
-          groupSpacing: 80,
-          groupsPerRow: 2,
-          columnDirection: 'horizontal',
-          groupProperties: ['State'],
-          columnProperty: 'Size',
-          showAnnotations: true,
-          annotationSpacing: 24
-        },
-        'Masked Input': {
-          padding: 20,
-          spacing: 16,
-          columnSpacing: 40,
-          groupSpacing: 80,
-          groupsPerRow: 2,
-          columnDirection: 'horizontal',
-          groupProperties: ['State'],
-          columnProperty: 'Type',
-          showAnnotations: true,
-          annotationSpacing: 24
-        },
-        'Number Input': {
-          padding: 20,
-          spacing: 16,
-          columnSpacing: 40,
-          groupSpacing: 80,
-          groupsPerRow: 3,
-          columnDirection: 'horizontal',
-          groupProperties: ['State'],
-          columnProperty: 'Size',
-          showAnnotations: true,
-          annotationSpacing: 24
-        },
-        'Password Input': {
-          padding: 20,
-          spacing: 16,
-          columnSpacing: 40,
-          groupSpacing: 80,
-          groupsPerRow: 2,
-          columnDirection: 'horizontal',
-          groupProperties: ['State', 'Visibility'],
-          columnProperty: 'Size',
-          showAnnotations: true,
-          annotationSpacing: 24
-        },
-        'Custom Input': {
-          padding: 20,
-          spacing: 16,
-          columnSpacing: 40,
-          groupSpacing: 80,
-          groupsPerRow: 2,
-          columnDirection: 'horizontal',
-          groupProperties: ['State'],
-          columnProperty: 'Type',
-          showAnnotations: true,
-          annotationSpacing: 24
+      'Desktop': {
+        components: {
+          'Input': {
+            padding: 20,
+            spacing: 16,
+            columnSpacing: 40,
+            groupSpacing: 80,
+            groupsPerRow: 3,
+            columnDirection: 'horizontal',
+            groupProperties: ['State', 'Size'],
+            columnProperty: 'Type',
+            showAnnotations: true,
+            annotationSpacing: 24
+          },
+          'Phone Input': {
+            padding: 20,
+            spacing: 16,
+            columnSpacing: 40,
+            groupSpacing: 80,
+            groupsPerRow: 2,
+            columnDirection: 'horizontal',
+            groupProperties: ['State'],
+            columnProperty: 'Size',
+            showAnnotations: true,
+            annotationSpacing: 24
+          },
+          'Masked Input': {
+            padding: 20,
+            spacing: 16,
+            columnSpacing: 40,
+            groupSpacing: 80,
+            groupsPerRow: 2,
+            columnDirection: 'horizontal',
+            groupProperties: ['State'],
+            columnProperty: 'Type',
+            showAnnotations: true,
+            annotationSpacing: 24
+          },
+          'Number Input': {
+            padding: 20,
+            spacing: 16,
+            columnSpacing: 40,
+            groupSpacing: 80,
+            groupsPerRow: 3,
+            columnDirection: 'horizontal',
+            groupProperties: ['State'],
+            columnProperty: 'Size',
+            showAnnotations: true,
+            annotationSpacing: 24
+          },
+          'Password Input': {
+            padding: 20,
+            spacing: 16,
+            columnSpacing: 40,
+            groupSpacing: 80,
+            groupsPerRow: 2,
+            columnDirection: 'horizontal',
+            groupProperties: ['State', 'Visibility'],
+            columnProperty: 'Size',
+            showAnnotations: true,
+            annotationSpacing: 24
+          },
+          'Custom Input': {
+            padding: 20,
+            spacing: 16,
+            columnSpacing: 40,
+            groupSpacing: 80,
+            groupsPerRow: 2,
+            columnDirection: 'horizontal',
+            groupProperties: ['State'],
+            columnProperty: 'Type',
+            showAnnotations: true,
+            annotationSpacing: 24
+          }
+        }
+      },
+      'Mobile': {
+        components: {
+          'Input': {
+            padding: 16,
+            spacing: 12,
+            columnSpacing: 30,
+            groupSpacing: 60,
+            groupsPerRow: 2,
+            columnDirection: 'horizontal',
+            groupProperties: ['State', 'Size'],
+            columnProperty: 'Type',
+            showAnnotations: true,
+            annotationSpacing: 20
+          },
+          'Phone Input': {
+            padding: 16,
+            spacing: 12,
+            columnSpacing: 30,
+            groupSpacing: 60,
+            groupsPerRow: 1,
+            columnDirection: 'vertical',
+            groupProperties: ['State'],
+            columnProperty: 'Size',
+            showAnnotations: true,
+            annotationSpacing: 20
+          }
         }
       }
     }
@@ -141,19 +201,31 @@ const componentPresets = {
   }
 };
 
-// Функция для получения предустановки для компонента (обновленная)
-function getComponentPreset(componentName) {
+// Функция для получения предустановки для компонента (обновленная для Desktop/Mobile)
+function getComponentPreset(componentName, platform = null) {
   // Сначала ищем среди одиночных компонентов
   if (componentPresets.components && componentPresets.components[componentName]) {
     return componentPresets.components[componentName];
   }
 
-  // Затем ищем среди групп
+  // Затем ищем среди групп с учетом платформы
   if (componentPresets.groups) {
     for (const groupKey in componentPresets.groups) {
       const group = componentPresets.groups[groupKey];
-      if (group.components && group.components[componentName]) {
-        return group.components[componentName];
+      
+      // Если платформа указана, ищем только в ней
+      if (platform && group[platform] && group[platform].components && group[platform].components[componentName]) {
+        return group[platform].components[componentName];
+      }
+      
+      // Если платформа не указана, ищем в любой доступной (приоритет Desktop)
+      if (!platform) {
+        if (group['Desktop'] && group['Desktop'].components && group['Desktop'].components[componentName]) {
+          return group['Desktop'].components[componentName];
+        }
+        if (group['Mobile'] && group['Mobile'].components && group['Mobile'].components[componentName]) {
+          return group['Mobile'].components[componentName];
+        }
       }
     }
   }
@@ -161,17 +233,51 @@ function getComponentPreset(componentName) {
   return null;
 }
 
-// Функция для получения группы компонента
+// Функция для получения доступных платформ для компонента
+function getComponentPlatforms(componentName) {
+  const platforms = [];
+  
+  if (componentPresets.groups) {
+    for (const groupKey in componentPresets.groups) {
+      const group = componentPresets.groups[groupKey];
+      
+      if (group['Desktop'] && group['Desktop'].components && group['Desktop'].components[componentName]) {
+        platforms.push('Desktop');
+      }
+      if (group['Mobile'] && group['Mobile'].components && group['Mobile'].components[componentName]) {
+        platforms.push('Mobile');
+      }
+    }
+  }
+  
+  return platforms;
+}
+
+// Функция для получения группы компонента (обновленная)
 function getComponentGroup(componentName) {
   if (componentPresets.groups) {
     for (const groupKey in componentPresets.groups) {
       const group = componentPresets.groups[groupKey];
-      if (group.components && group.components[componentName]) {
+      const platforms = [];
+      const allComponents = new Set();
+      
+      // Собираем информацию о всех платформах и компонентах
+      ['Desktop', 'Mobile'].forEach(platform => {
+        if (group[platform] && group[platform].components) {
+          if (group[platform].components[componentName]) {
+            platforms.push(platform);
+          }
+          Object.keys(group[platform].components).forEach(comp => allComponents.add(comp));
+        }
+      });
+      
+      if (platforms.length > 0) {
         return {
           key: groupKey,
           name: group.name,
           description: group.description,
-          components: Object.keys(group.components)
+          platforms: platforms,
+          components: Array.from(allComponents)
         };
       }
     }
@@ -180,7 +286,7 @@ function getComponentGroup(componentName) {
 }
 
 // Функция для получения списка всех доступных предустановок (обновленная)
-function getAllPresets() {
+function getAllPresets(platform = null) {
   const allPresets = {};
   
   // Добавляем одиночные компоненты
@@ -192,8 +298,19 @@ function getAllPresets() {
   if (componentPresets.groups) {
     for (const groupKey in componentPresets.groups) {
       const group = componentPresets.groups[groupKey];
-      if (group.components) {
-        Object.assign(allPresets, group.components);
+      
+      if (platform) {
+        // Если указана платформа, берем только её
+        if (group[platform] && group[platform].components) {
+          Object.assign(allPresets, group[platform].components);
+        }
+      } else {
+        // Если платформа не указана, берем все (приоритет Desktop)
+        ['Desktop', 'Mobile'].forEach(plt => {
+          if (group[plt] && group[plt].components) {
+            Object.assign(allPresets, group[plt].components);
+          }
+        });
       }
     }
   }
@@ -207,10 +324,21 @@ function getAllGroups() {
 }
 
 // Функция для добавления новой предустановки (обновленная)
-function addComponentPreset(componentName, preset, groupName = null) {
+function addComponentPreset(componentName, preset, groupName = null, platform = null) {
   if (groupName && componentPresets.groups && componentPresets.groups[groupName]) {
-    // Добавляем в группу
-    componentPresets.groups[groupName].components[componentName] = preset;
+    if (platform && ['Desktop', 'Mobile'].includes(platform)) {
+      // Добавляем в группу на определенной платформе
+      if (!componentPresets.groups[groupName][platform]) {
+        componentPresets.groups[groupName][platform] = { components: {} };
+      }
+      componentPresets.groups[groupName][platform].components[componentName] = preset;
+    } else {
+      // Добавляем в Desktop по умолчанию
+      if (!componentPresets.groups[groupName]['Desktop']) {
+        componentPresets.groups[groupName]['Desktop'] = { components: {} };
+      }
+      componentPresets.groups[groupName]['Desktop'].components[componentName] = preset;
+    }
   } else {
     // Добавляем как одиночный компонент
     if (!componentPresets.components) {
@@ -225,6 +353,7 @@ if (typeof module !== 'undefined' && module.exports) {
   module.exports = {
     componentPresets,
     getComponentPreset,
+    getComponentPlatforms,
     getComponentGroup,
     getAllPresets,
     getAllGroups,
