@@ -183,6 +183,23 @@
       font-weight: 600;
       color: #333;
       margin-bottom: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+    
+    .property-visibility-toggle {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      font-size: 10px;
+      font-weight: normal;
+      color: #666;
+    }
+    
+    .property-visibility-toggle input[type="checkbox"] {
+      margin: 0;
+      transform: scale(0.8);
     }
     
     .sorting-values {
@@ -577,6 +594,7 @@
       
       // Загружаем настройки сортировки
       window.pendingSortingOrder = settings.sortingOrder || null;
+      window.pendingPropertyNamesVisibility = settings.propertyNamesVisibility || null;
       const customSortingCheckbox = document.getElementById('use-custom-sorting-checkbox');
       if (settings.sortingOrder && Object.keys(settings.sortingOrder).length > 0) {
         customSortingCheckbox.checked = true;
@@ -606,15 +624,28 @@
         columnSelect.value = window.pendingColumnProperty;
       }
       
-      // Применяем настройки сортировки
-      if (window.pendingSortingOrder) {
-        updateSortingOrderUI(window.pendingSortingOrder);
-      }
-      
-      // Очищаем отложенные настройки
-      window.pendingGroupProperties = null;
-      window.pendingColumnProperty = null;
-      window.pendingSortingOrder = null;
+             // Применяем настройки сортировки
+       if (window.pendingSortingOrder) {
+         updateSortingOrderUI(window.pendingSortingOrder);
+       }
+       
+       // Применяем настройки видимости названий свойств
+       if (window.pendingPropertyNamesVisibility) {
+         setTimeout(() => {
+           Object.keys(window.pendingPropertyNamesVisibility).forEach(property => {
+             const checkbox = document.getElementById(`show-name-${property}`);
+             if (checkbox) {
+               checkbox.checked = window.pendingPropertyNamesVisibility[property];
+             }
+           });
+         }, 100);
+       }
+       
+       // Очищаем отложенные настройки
+       window.pendingGroupProperties = null;
+       window.pendingColumnProperty = null;
+       window.pendingSortingOrder = null;
+       window.pendingPropertyNamesVisibility = null;
     }
 
     // Функция для загрузки предустановки по платформе
@@ -795,7 +826,28 @@
         
         const title = document.createElement('div');
         title.className = 'sorting-property-title';
-        title.textContent = `Свойство: ${property}`;
+        
+        const titleText = document.createElement('span');
+        titleText.textContent = `Свойство: ${property}`;
+        title.appendChild(titleText);
+        
+        // Добавляем переключатель видимости названия свойства
+        const visibilityToggle = document.createElement('label');
+        visibilityToggle.className = 'property-visibility-toggle';
+        
+        const checkbox = document.createElement('input');
+        checkbox.type = 'checkbox';
+        checkbox.id = `show-name-${property}`;
+        checkbox.dataset.property = property;
+        checkbox.checked = true; // По умолчанию показываем название
+        
+        const label = document.createElement('span');
+        label.textContent = 'Показать название';
+        
+        visibilityToggle.appendChild(checkbox);
+        visibilityToggle.appendChild(label);
+        title.appendChild(visibilityToggle);
+        
         propertyDiv.appendChild(title);
         
         const valuesContainer = document.createElement('div');
@@ -863,6 +915,23 @@
       });
       
       return Object.keys(sortingOrder).length > 0 ? sortingOrder : null;
+    }
+
+    // Функция для получения настроек видимости названий из UI
+    function getPropertyNamesVisibilityFromUI() {
+      if (!document.getElementById('use-custom-sorting-checkbox').checked) {
+        return null;
+      }
+      
+      const propertyNamesVisibility = {};
+      const checkboxes = document.querySelectorAll('input[id^="show-name-"]');
+      
+      checkboxes.forEach(checkbox => {
+        const property = checkbox.dataset.property;
+        propertyNamesVisibility[property] = checkbox.checked;
+      });
+      
+      return Object.keys(propertyNamesVisibility).length > 0 ? propertyNamesVisibility : null;
     }
     
     // Обработчики drag and drop
@@ -946,9 +1015,10 @@
       const columnProperty = document.getElementById('column-property-select').value;
       const showAnnotations = document.getElementById('show-annotations-checkbox').checked;
       const annotationSpacing = parseInt(document.getElementById('annotation-spacing-input').value) || 24;
-      const sortingOrder = getSortingOrderFromUI();
-      
-      parent.postMessage({ 
+              const sortingOrder = getSortingOrderFromUI();
+        const propertyNamesVisibility = getPropertyNamesVisibilityFromUI();
+        
+        parent.postMessage({ 
         pluginMessage: { 
           type: 'align-variants',
           padding: padding,
@@ -961,7 +1031,8 @@
           columnProperty: columnProperty === 'none' ? null : columnProperty,
           showAnnotations: showAnnotations,
           annotationSpacing: annotationSpacing,
-          sortingOrder: sortingOrder
+          sortingOrder: sortingOrder,
+          propertyNamesVisibility: propertyNamesVisibility
         } 
       }, '*');
     });

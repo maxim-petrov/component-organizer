@@ -30,6 +30,12 @@ const componentPresets = {
                 'False': 1,
                 'True': 2
               }
+            },
+            propertyNamesVisibility: {
+              'State': false,  // Показывать только "Default" вместо "State:Default"
+              'Opened': true,  // Показывать "Opened:True"
+              'Align': true,
+              'Type': true
             }
           },
           'Accordion Group v2': {
@@ -49,6 +55,9 @@ const componentPresets = {
                 'Secondary': 2,
                 'Tertiary': 3
               }
+            },
+            propertyNamesVisibility: {
+              'Type': false  // Показывать только "Primary" вместо "Type:Primary"
             }
           }
         }
@@ -73,6 +82,12 @@ const componentPresets = {
                 'Active': 3,
                 'Focus': 4
               }
+            },
+            propertyNamesVisibility: {
+              'State': false,  // Показывать только "Default"
+              'Opened': true,
+              'Align': true,
+              'Type': true
             }
           },
           'Accordion Group v2': {
@@ -93,6 +108,12 @@ const componentPresets = {
                 'Hover': 3,
                 'Focus': 4
               }
+            },
+            propertyNamesVisibility: {
+              'State': false,  // Показывать только "Default"
+              'Opened': true,
+              'Align': true,
+              'Type': true
             }
           }
         }
@@ -128,6 +149,11 @@ const componentPresets = {
                 'Medium': 2,
                 'Large': 3
               }
+            },
+            propertyNamesVisibility: {
+              'State': false,  // Показывать только "Default" вместо "State:Default"
+              'Size': true,    // Показывать "Size:Small"
+              'Type': true
             }
           },
           'Phone Input': {
@@ -148,6 +174,10 @@ const componentPresets = {
                 'Error': 3,
                 'Disabled': 4
               }
+            },
+            propertyNamesVisibility: {
+              'State': false,  // Показывать только "Default"
+              'Size': true
             }
           },
           'Masked Input': {
@@ -169,6 +199,10 @@ const componentPresets = {
                 'Focus': 4,
                 'Error': 5
               }
+            },
+            propertyNamesVisibility: {
+              'State': false,  // Показывать только "Default"
+              'Type': true
             }
           },
           'Number Input': {
@@ -191,6 +225,10 @@ const componentPresets = {
                 'Error': 5,
                 'Disabled': 6
               }
+            },
+            propertyNamesVisibility: {
+              'State': false,  // Показывать только "Default"
+              'Size': true
             }
           },
           'Password Input': {
@@ -217,6 +255,11 @@ const componentPresets = {
                 'Hidden': 1,
                 'Visible': 2
               }
+            },
+            propertyNamesVisibility: {
+              'State': false,     // Показывать только "Default"
+              'Visibility': true, // Показывать "Visibility:Hidden"
+              'Size': true
             }
           },
           'Custom Input': {
@@ -237,6 +280,10 @@ const componentPresets = {
                 'Active': 3,
                 'Focus': 4
               }
+            },
+            propertyNamesVisibility: {
+              'State': false,  // Показывать только "Default"
+              'Type': true
             }
           }
         }
@@ -265,6 +312,11 @@ const componentPresets = {
                 'Medium': 1,
                 'Large': 2
               }
+            },
+            propertyNamesVisibility: {
+              'State': false,  // Показывать только "Default"
+              'Size': true,    // Показывать "Size:Medium"
+              'Type': true
             }
           },
           'Phone Input': {
@@ -284,6 +336,10 @@ const componentPresets = {
                 'Focus': 2,
                 'Error': 3
               }
+            },
+            propertyNamesVisibility: {
+              'State': false,  // Показывать только "Default"
+              'Size': true
             }
           }
         }
@@ -304,19 +360,23 @@ const componentPresets = {
       columnProperty: 'Info Type',
       showAnnotations: true,
       annotationSpacing: 24,
-      sortingOrder: {
-        'Type': {
-          'Info': 1,
-          'Success': 2,
-          'Warning': 3,
-          'Error': 4
+              sortingOrder: {
+          'Type': {
+            'Info': 1,
+            'Success': 2,
+            'Warning': 3,
+            'Error': 4
+          },
+          'Info Type': {
+            'Default': 1,
+            'Compact': 2,
+            'Detailed': 3
+          }
         },
-        'Info Type': {
-          'Default': 1,
-          'Compact': 2,
-          'Detailed': 3
+        propertyNamesVisibility: {
+          'Type': false,      // Показывать только "Info" вместо "Type:Info"
+          'Info Type': true   // Показывать "Info Type:Default"
         }
-      }
     },
     'Avatar': {
       padding: 16,
@@ -329,21 +389,25 @@ const componentPresets = {
       columnProperty: 'Size',
       showAnnotations: true,
       annotationSpacing: 24,
-      sortingOrder: {
-        'Size': {
-          'XS': 1,
-          'S': 2,
-          'M': 3,
-          'L': 4,
-          'XL': 5
+              sortingOrder: {
+          'Size': {
+            'XS': 1,
+            'S': 2,
+            'M': 3,
+            'L': 4,
+            'XL': 5
+          },
+          'State': {
+            'Default': 1,
+            'Hover': 2,
+            'Selected': 3,
+            'Disabled': 4
+          }
         },
-        'State': {
-          'Default': 1,
-          'Hover': 2,
-          'Selected': 3,
-          'Disabled': 4
+        propertyNamesVisibility: {
+          'Size': true,   // Показывать "Size:M"
+          'State': false  // Показывать только "Default"
         }
-      }
     }
   }
 };

@@ -248,58 +248,66 @@ function loadPresets() {
 
       // Одиночные компоненты (не многосоставные)
       components: {
-        'Alert': {
-          padding: 20,
-          spacing: 40,
-          columnSpacing: 80,
-          groupSpacing: 160,
-          groupsPerRow: 2,
-          columnDirection: 'horizontal',
-          groupProperties: ['Type'],
-          columnProperty: 'Info Type',
-          showAnnotations: true,
-          annotationSpacing: 24,
-          sortingOrder: {
-            'Type': {
-              'Info': 1,
-              'Success': 2,
-              'Warning': 3,
-              'Error': 4
+                  'Alert': {
+            padding: 20,
+            spacing: 40,
+            columnSpacing: 80,
+            groupSpacing: 160,
+            groupsPerRow: 2,
+            columnDirection: 'horizontal',
+            groupProperties: ['Type'],
+            columnProperty: 'Info Type',
+            showAnnotations: true,
+            annotationSpacing: 24,
+            sortingOrder: {
+              'Type': {
+                'Info': 1,
+                'Success': 2,
+                'Warning': 3,
+                'Error': 4
+              },
+              'Info Type': {
+                'Default': 1,
+                'Compact': 2,
+                'Detailed': 3
+              }
             },
-            'Info Type': {
-              'Default': 1,
-              'Compact': 2,
-              'Detailed': 3
+            propertyNamesVisibility: {
+              'Type': false,      // Показывать только "Info" вместо "Type:Info"
+              'Info Type': true   // Показывать "Info Type:Default"
+            }
+          },
+                  'Avatar': {
+            padding: 16,
+            spacing: 20,
+            columnSpacing: 40,
+            groupSpacing: 80,
+            groupsPerRow: 4,
+            columnDirection: 'horizontal',
+            groupProperties: ['State'],
+            columnProperty: 'Size',
+            showAnnotations: true,
+            annotationSpacing: 24,
+            sortingOrder: {
+              'Size': {
+                'XS': 1,
+                'S': 2,
+                'M': 3,
+                'L': 4,
+                'XL': 5
+              },
+              'State': {
+                'Default': 1,
+                'Hover': 2,
+                'Selected': 3,
+                'Disabled': 4
+              }
+            },
+            propertyNamesVisibility: {
+              'Size': true,   // Показывать "Size:M"
+              'State': false  // Показывать только "Default"
             }
           }
-        },
-        'Avatar': {
-          padding: 16,
-          spacing: 20,
-          columnSpacing: 40,
-          groupSpacing: 80,
-          groupsPerRow: 4,
-          columnDirection: 'horizontal',
-          groupProperties: ['State'],
-          columnProperty: 'Size',
-          showAnnotations: true,
-          annotationSpacing: 24,
-          sortingOrder: {
-            'Size': {
-              'XS': 1,
-              'S': 2,
-              'M': 3,
-              'L': 4,
-              'XL': 5
-            },
-            'State': {
-              'Default': 1,
-              'Hover': 2,
-              'Selected': 3,
-              'Disabled': 4
-            }
-          }
-        }
       }
     };
 
@@ -1038,7 +1046,8 @@ function alignComponentVariants(
   columnProperty = null,
   showAnnotations = false,
   annotationSpacing = 24,
-  sortingOrder = null
+  sortingOrder = null,
+  propertyNamesVisibility = null
 ) {
   if (!componentSet || componentSet.type !== 'COMPONENT_SET') {
     figma.notify('Выберите набор компонентов (Component Set)');
@@ -1071,7 +1080,7 @@ function alignComponentVariants(
     if (groupProperties.length > 0 || columnProperty) {
       // Многоуровневая группировка
       const groups = createMultiLevelGroups(variants, groupProperties, columnProperty, sortingOrder);
-      setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing, groupProperties, columnProperty);
+      setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing, groupProperties, columnProperty, propertyNamesVisibility);
       
       const groupCount = Object.keys(groups).length;
       const totalColumns = Object.values(groups).reduce((max, group) => 
@@ -1082,7 +1091,7 @@ function alignComponentVariants(
       figma.notify(`Создано ${groupCount} групп (${rows} строк по ${groupsPerRow} макс.) с ${totalColumns} максимум колонок в группе, направление: ${directionText}`);
     } else {
      // Простая сетка без группировки
-     setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection, annotationSpacing, sortingOrder);
+     setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection, annotationSpacing, sortingOrder, propertyNamesVisibility);
      figma.notify(`Варианты выровнены в простую сетку`);
    }
 
@@ -1093,7 +1102,7 @@ function alignComponentVariants(
 }
 
 // Функция для создания многоуровневого Grid layout
-function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing = 24, groupProperties = [], columnProperty = null) {
+function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing = 24, groupProperties = [], columnProperty = null, propertyNamesVisibility = null) {
   const parentNode = componentSet.parent;
   const componentSetX = componentSet.x;
   const componentSetY = componentSet.y;
@@ -1305,8 +1314,16 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
                   const rowProps = Object.keys(variant.variantProperties)
                     .filter(prop => !excludeProps.includes(prop))
                     .sort()
-                    .map(prop => `${prop}:${variant.variantProperties[prop]}`)
-                    .join('|');
+                    .map(prop => {
+                      const value = variant.variantProperties[prop];
+                      // Проверяем настройки видимости названий свойств
+                      if (propertyNamesVisibility && propertyNamesVisibility[prop] === false) {
+                        return value; // Показываем только значение
+                      } else {
+                        return `${prop}:${value}`; // Показываем свойство и значение
+                      }
+                    })
+                    .join(' | ');
                   
                   rowName = rowProps || `Row ${itemIndex + 1}`;
                 }
@@ -1530,8 +1547,16 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
                   const rowProps = Object.keys(variant.variantProperties)
                     .filter(prop => !excludeProps.includes(prop))
                     .sort()
-                    .map(prop => `${prop}:${variant.variantProperties[prop]}`)
-                    .join('|');
+                    .map(prop => {
+                      const value = variant.variantProperties[prop];
+                      // Проверяем настройки видимости названий свойств  
+                      if (propertyNamesVisibility && propertyNamesVisibility[prop] === false) {
+                        return value; // Показываем только значение
+                      } else {
+                        return `${prop}:${value}`; // Показываем свойство и значение
+                      }
+                    })
+                    .join(' | ');
                   
                   rowName = rowProps || `Row ${itemIndex + 1}`;
                 }
@@ -1620,7 +1645,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
 }
 
 // Функция для создания простого Grid layout (резервная)
-function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection = 'horizontal', annotationSpacing = 24, sortingOrder = null) {
+function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection = 'horizontal', annotationSpacing = 24, sortingOrder = null, propertyNamesVisibility = null) {
   const parentNode = componentSet.parent;
   const componentSetX = componentSet.x;
   const componentSetY = componentSet.y;
@@ -1741,7 +1766,8 @@ figma.ui.onmessage = (msg) => {
       preset.columnProperty,
       preset.showAnnotations,
       preset.annotationSpacing,
-      preset.sortingOrder
+      preset.sortingOrder,
+      preset.propertyNamesVisibility
     );
   }
   
@@ -1764,7 +1790,8 @@ figma.ui.onmessage = (msg) => {
       columnProperty: msg.columnProperty || null,
       showAnnotations: msg.showAnnotations || false,
       annotationSpacing: msg.annotationSpacing || 24,
-      sortingOrder: msg.sortingOrder || null
+      sortingOrder: msg.sortingOrder || null,
+      propertyNamesVisibility: msg.propertyNamesVisibility || null
     };
 
     alignComponentVariants(
@@ -1779,7 +1806,8 @@ figma.ui.onmessage = (msg) => {
       settings.columnProperty,
       settings.showAnnotations,
       settings.annotationSpacing,
-      settings.sortingOrder
+      settings.sortingOrder,
+      settings.propertyNamesVisibility
     );
   }
   
