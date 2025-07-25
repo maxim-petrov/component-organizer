@@ -17,7 +17,20 @@ const componentPresets = {
             groupProperties: ['Opened', 'Align'],
             columnProperty: 'Type',
             showAnnotations: true,
-            annotationSpacing: 24
+            annotationSpacing: 24,
+            sortingOrder: {
+              'State': {
+                'Default': 1,
+                'Hover': 2,
+                'Active': 3,
+                'Focus': 4,
+                'Disabled': 5
+              },
+              'Opened': {
+                'False': 1,
+                'True': 2
+              }
+            }
           },
           'Accordion Group v2': {
             padding: 20,
@@ -29,7 +42,14 @@ const componentPresets = {
             groupProperties: ['Type'],
             columnProperty: null,
             showAnnotations: false,
-            annotationSpacing: 24
+            annotationSpacing: 24,
+            sortingOrder: {
+              'Type': {
+                'Primary': 1,
+                'Secondary': 2,
+                'Tertiary': 3
+              }
+            }
           }
         }
       },
@@ -45,7 +65,15 @@ const componentPresets = {
             groupProperties: ['Opened', 'Align'],
             columnProperty: 'Type',
             showAnnotations: true,
-            annotationSpacing: 24
+            annotationSpacing: 24,
+            sortingOrder: {
+              'State': {
+                'Default': 1,
+                'Hover': 2,
+                'Active': 3,
+                'Focus': 4
+              }
+            }
           },
           'Accordion Group v2': {
             padding: 20,
@@ -57,7 +85,15 @@ const componentPresets = {
             groupProperties: ['Opened', 'Align'],
             columnProperty: 'Type',
             showAnnotations: true,
-            annotationSpacing: 24
+            annotationSpacing: 24,
+            sortingOrder: {
+              'State': {
+                'Default': 1,
+                'Active': 2,
+                'Hover': 3,
+                'Focus': 4
+              }
+            }
           }
         }
       }
@@ -77,7 +113,22 @@ const componentPresets = {
             groupProperties: ['State', 'Size'],
             columnProperty: 'Type',
             showAnnotations: true,
-            annotationSpacing: 24
+            annotationSpacing: 24,
+            sortingOrder: {
+              'State': {
+                'Default': 1,
+                'Hover': 2,
+                'Active': 3,
+                'Focus': 4,
+                'Error': 5,
+                'Disabled': 6
+              },
+              'Size': {
+                'Small': 1,
+                'Medium': 2,
+                'Large': 3
+              }
+            }
           },
           'Phone Input': {
             padding: 20,
@@ -89,7 +140,15 @@ const componentPresets = {
             groupProperties: ['State'],
             columnProperty: 'Size',
             showAnnotations: true,
-            annotationSpacing: 24
+            annotationSpacing: 24,
+            sortingOrder: {
+              'State': {
+                'Default': 1,
+                'Focus': 2,
+                'Error': 3,
+                'Disabled': 4
+              }
+            }
           },
           'Masked Input': {
             padding: 20,
@@ -101,7 +160,16 @@ const componentPresets = {
             groupProperties: ['State'],
             columnProperty: 'Type',
             showAnnotations: true,
-            annotationSpacing: 24
+            annotationSpacing: 24,
+            sortingOrder: {
+              'State': {
+                'Default': 1,
+                'Hover': 2,
+                'Active': 3,
+                'Focus': 4,
+                'Error': 5
+              }
+            }
           },
           'Number Input': {
             padding: 20,
@@ -113,7 +181,17 @@ const componentPresets = {
             groupProperties: ['State'],
             columnProperty: 'Size',
             showAnnotations: true,
-            annotationSpacing: 24
+            annotationSpacing: 24,
+            sortingOrder: {
+              'State': {
+                'Default': 1,
+                'Hover': 2,
+                'Active': 3,
+                'Focus': 4,
+                'Error': 5,
+                'Disabled': 6
+              }
+            }
           },
           'Password Input': {
             padding: 20,
@@ -125,7 +203,21 @@ const componentPresets = {
             groupProperties: ['State', 'Visibility'],
             columnProperty: 'Size',
             showAnnotations: true,
-            annotationSpacing: 24
+            annotationSpacing: 24,
+            sortingOrder: {
+              'State': {
+                'Default': 1,
+                'Hover': 2,
+                'Active': 3,
+                'Focus': 4,
+                'Error': 5,
+                'Disabled': 6
+              },
+              'Visibility': {
+                'Hidden': 1,
+                'Visible': 2
+              }
+            }
           },
           'Custom Input': {
             padding: 20,
@@ -137,7 +229,15 @@ const componentPresets = {
             groupProperties: ['State'],
             columnProperty: 'Type',
             showAnnotations: true,
-            annotationSpacing: 24
+            annotationSpacing: 24,
+            sortingOrder: {
+              'State': {
+                'Default': 1,
+                'Hover': 2,
+                'Active': 3,
+                'Focus': 4
+              }
+            }
           }
         }
       },
@@ -153,7 +253,19 @@ const componentPresets = {
             groupProperties: ['State', 'Size'],
             columnProperty: 'Type',
             showAnnotations: true,
-            annotationSpacing: 20
+            annotationSpacing: 20,
+            sortingOrder: {
+              'State': {
+                'Default': 1,
+                'Focus': 2,
+                'Error': 3,
+                'Disabled': 4
+              },
+              'Size': {
+                'Medium': 1,
+                'Large': 2
+              }
+            }
           },
           'Phone Input': {
             padding: 16,
@@ -165,7 +277,14 @@ const componentPresets = {
             groupProperties: ['State'],
             columnProperty: 'Size',
             showAnnotations: true,
-            annotationSpacing: 20
+            annotationSpacing: 20,
+            sortingOrder: {
+              'State': {
+                'Default': 1,
+                'Focus': 2,
+                'Error': 3
+              }
+            }
           }
         }
       }
@@ -184,7 +303,20 @@ const componentPresets = {
       groupProperties: ['Type'],
       columnProperty: 'Info Type',
       showAnnotations: true,
-      annotationSpacing: 24
+      annotationSpacing: 24,
+      sortingOrder: {
+        'Type': {
+          'Info': 1,
+          'Success': 2,
+          'Warning': 3,
+          'Error': 4
+        },
+        'Info Type': {
+          'Default': 1,
+          'Compact': 2,
+          'Detailed': 3
+        }
+      }
     },
     'Avatar': {
       padding: 16,
@@ -196,7 +328,22 @@ const componentPresets = {
       groupProperties: ['State'],
       columnProperty: 'Size',
       showAnnotations: true,
-      annotationSpacing: 24
+      annotationSpacing: 24,
+      sortingOrder: {
+        'Size': {
+          'XS': 1,
+          'S': 2,
+          'M': 3,
+          'L': 4,
+          'XL': 5
+        },
+        'State': {
+          'Default': 1,
+          'Hover': 2,
+          'Selected': 3,
+          'Disabled': 4
+        }
+      }
     }
   }
 };

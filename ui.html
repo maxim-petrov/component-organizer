@@ -170,6 +170,67 @@
       font-style: italic;
     }
     
+    .sorting-property {
+      margin-bottom: 12px;
+      padding: 8px;
+      background: #f8f8f8;
+      border-radius: 4px;
+      border: 1px solid #e0e0e0;
+    }
+    
+    .sorting-property-title {
+      font-size: 12px;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 6px;
+    }
+    
+    .sorting-values {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+    
+    .sorting-value {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 4px 8px;
+      background: #ffffff;
+      border: 1px solid #d0d0d0;
+      border-radius: 3px;
+      cursor: move;
+      font-size: 11px;
+    }
+    
+    .sorting-value:hover {
+      background: #f0f7ff;
+      border-color: #b3d9ff;
+    }
+    
+    .sorting-value.dragging {
+      opacity: 0.5;
+    }
+    
+    .drag-handle {
+      color: #999;
+      cursor: move;
+      font-size: 12px;
+    }
+    
+    .sorting-order-number {
+      background: #7B29E5;
+      color: white;
+      border-radius: 50%;
+      width: 18px;
+      height: 18px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: bold;
+    }
+    
     .radio-group {
       display: flex;
       gap: 12px;
@@ -440,6 +501,18 @@
           <option value="none">Выберите свойство для колонок</option>
         </select>
       </div>
+      
+      <div class="setting-group">
+        <div class="setting-row">
+          <input type="checkbox" id="use-custom-sorting-checkbox">
+          <label class="setting-label" for="use-custom-sorting-checkbox">Настроить порядок сортировки</label>
+        </div>
+        <div class="group-info">Задать кастомный порядок значений свойств компонента</div>
+        
+        <div id="sorting-order-section" style="display: none; margin-top: 12px;">
+          <div id="sorting-properties-list"></div>
+        </div>
+      </div>
     </div>
     
     <div class="features">
@@ -501,6 +574,17 @@
       // Загружаем выбранные свойства групп (будет применено после загрузки свойств)
       window.pendingGroupProperties = settings.groupProperties || [];
       window.pendingColumnProperty = settings.columnProperty || null;
+      
+      // Загружаем настройки сортировки
+      window.pendingSortingOrder = settings.sortingOrder || null;
+      const customSortingCheckbox = document.getElementById('use-custom-sorting-checkbox');
+      if (settings.sortingOrder && Object.keys(settings.sortingOrder).length > 0) {
+        customSortingCheckbox.checked = true;
+        document.getElementById('sorting-order-section').style.display = 'block';
+      } else {
+        customSortingCheckbox.checked = false;
+        document.getElementById('sorting-order-section').style.display = 'none';
+      }
     }
 
     // Функция для применения отложенных настроек группировки
@@ -522,9 +606,15 @@
         columnSelect.value = window.pendingColumnProperty;
       }
       
+      // Применяем настройки сортировки
+      if (window.pendingSortingOrder) {
+        updateSortingOrderUI(window.pendingSortingOrder);
+      }
+      
       // Очищаем отложенные настройки
       window.pendingGroupProperties = null;
       window.pendingColumnProperty = null;
+      window.pendingSortingOrder = null;
     }
 
     // Функция для загрузки предустановки по платформе
@@ -688,6 +778,136 @@
       const checkboxes = document.querySelectorAll('#group-properties-list input[type="checkbox"]:checked');
       return Array.from(checkboxes).map(cb => cb.value);
     }
+
+    // Функция для обновления UI порядка сортировки
+    function updateSortingOrderUI(sortingOrder) {
+      const container = document.getElementById('sorting-properties-list');
+      container.innerHTML = '';
+      
+      if (!sortingOrder || Object.keys(sortingOrder).length === 0) {
+        container.innerHTML = '<div class="group-info">Выберите компонент с предустановкой для настройки сортировки</div>';
+        return;
+      }
+      
+      Object.keys(sortingOrder).forEach(property => {
+        const propertyDiv = document.createElement('div');
+        propertyDiv.className = 'sorting-property';
+        
+        const title = document.createElement('div');
+        title.className = 'sorting-property-title';
+        title.textContent = `Свойство: ${property}`;
+        propertyDiv.appendChild(title);
+        
+        const valuesContainer = document.createElement('div');
+        valuesContainer.className = 'sorting-values';
+        valuesContainer.dataset.property = property;
+        
+        // Сортируем значения по порядку
+        const values = Object.keys(sortingOrder[property]).sort((a, b) => {
+          return sortingOrder[property][a] - sortingOrder[property][b];
+        });
+        
+        values.forEach((value, index) => {
+          const valueDiv = document.createElement('div');
+          valueDiv.className = 'sorting-value';
+          valueDiv.draggable = true;
+          valueDiv.dataset.value = value;
+          
+          const orderNumber = document.createElement('div');
+          orderNumber.className = 'sorting-order-number';
+          orderNumber.textContent = index + 1;
+          
+          const dragHandle = document.createElement('span');
+          dragHandle.className = 'drag-handle';
+          dragHandle.textContent = '⋮⋮';
+          
+          const valueText = document.createElement('span');
+          valueText.textContent = value;
+          
+          valueDiv.appendChild(orderNumber);
+          valueDiv.appendChild(dragHandle);
+          valueDiv.appendChild(valueText);
+          
+          // Добавляем обработчики drag and drop
+          valueDiv.addEventListener('dragstart', handleDragStart);
+          valueDiv.addEventListener('dragover', handleDragOver);
+          valueDiv.addEventListener('drop', handleDrop);
+          valueDiv.addEventListener('dragend', handleDragEnd);
+          
+          valuesContainer.appendChild(valueDiv);
+        });
+        
+        propertyDiv.appendChild(valuesContainer);
+        container.appendChild(propertyDiv);
+      });
+    }
+    
+    // Функция для получения текущего порядка сортировки из UI
+    function getSortingOrderFromUI() {
+      if (!document.getElementById('use-custom-sorting-checkbox').checked) {
+        return null;
+      }
+      
+      const sortingOrder = {};
+      const propertyContainers = document.querySelectorAll('.sorting-values');
+      
+      propertyContainers.forEach(container => {
+        const property = container.dataset.property;
+        const values = container.querySelectorAll('.sorting-value');
+        
+        sortingOrder[property] = {};
+        values.forEach((valueDiv, index) => {
+          const value = valueDiv.dataset.value;
+          sortingOrder[property][value] = index + 1;
+        });
+      });
+      
+      return Object.keys(sortingOrder).length > 0 ? sortingOrder : null;
+    }
+    
+    // Обработчики drag and drop
+    let draggedElement = null;
+    
+    function handleDragStart(e) {
+      draggedElement = e.target;
+      e.target.classList.add('dragging');
+    }
+    
+    function handleDragOver(e) {
+      e.preventDefault();
+    }
+    
+    function handleDrop(e) {
+      e.preventDefault();
+      
+      if (draggedElement && e.target.classList.contains('sorting-value') && draggedElement !== e.target) {
+        const container = e.target.parentNode;
+        const draggedIndex = Array.from(container.children).indexOf(draggedElement);
+        const targetIndex = Array.from(container.children).indexOf(e.target);
+        
+        if (draggedIndex < targetIndex) {
+          container.insertBefore(draggedElement, e.target.nextSibling);
+        } else {
+          container.insertBefore(draggedElement, e.target);
+        }
+        
+        // Обновляем номера порядка
+        updateOrderNumbers(container);
+      }
+    }
+    
+    function handleDragEnd(e) {
+      e.target.classList.remove('dragging');
+      draggedElement = null;
+    }
+    
+    function updateOrderNumbers(container) {
+      const values = container.querySelectorAll('.sorting-value');
+      values.forEach((valueDiv, index) => {
+        const orderNumber = valueDiv.querySelector('.sorting-order-number');
+        orderNumber.textContent = index + 1;
+      });
+    }
     
     // Обработчики событий
     document.getElementById('preset-btn').addEventListener('click', () => {
@@ -726,6 +946,7 @@
       const columnProperty = document.getElementById('column-property-select').value;
       const showAnnotations = document.getElementById('show-annotations-checkbox').checked;
       const annotationSpacing = parseInt(document.getElementById('annotation-spacing-input').value) || 24;
+      const sortingOrder = getSortingOrderFromUI();
       
       parent.postMessage({ 
         pluginMessage: { 
@@ -739,7 +960,8 @@
           groupProperties: groupProperties,
           columnProperty: columnProperty === 'none' ? null : columnProperty,
           showAnnotations: showAnnotations,
-          annotationSpacing: annotationSpacing
+          annotationSpacing: annotationSpacing,
+          sortingOrder: sortingOrder
         } 
       }, '*');
     });
@@ -760,6 +982,24 @@
           loadPresetForPlatform(window.currentComponentName, radio.value);
         }
       });
+    });
+    
+    // Обработчик включения/выключения кастомной сортировки
+    document.getElementById('use-custom-sorting-checkbox').addEventListener('change', (e) => {
+      const sortingSection = document.getElementById('sorting-order-section');
+      if (e.target.checked) {
+        sortingSection.style.display = 'block';
+        // Если есть доступные свойства, создаем базовый порядок сортировки
+        if (availableProperties.length > 0) {
+          const baseSortingOrder = {};
+          availableProperties.forEach(prop => {
+            baseSortingOrder[prop] = {};
+          });
+          updateSortingOrderUI(baseSortingOrder);
+        }
+      } else {
+        sortingSection.style.display = 'none';
+      }
     });
     
     // Обработчик сообщений от плагина
