@@ -8,10 +8,10 @@ const componentPresets = {
       'Desktop': {
         components: {
           'AccordionRow v2': {
-            padding: 140,
-            spacing: 20,
-            columnSpacing: 40,
-            groupSpacing: 80,
+            padding: 96,
+            spacing: 48,
+            columnSpacing: 48,
+            groupSpacing: 96,
             groupsPerRow: 2,
             columnDirection: 'horizontal',
             groupProperties: ['Opened', 'Align'],
@@ -32,22 +32,27 @@ const componentPresets = {
               }
             },
             propertyNamesVisibility: {
-              'State': false,  // Показывать только "Default" вместо "State:Default"
-              'Opened': true,  // Показывать "Opened:True"
+              'State': false,
+              'Opened': true,  
               'Align': true,
               'Type': true
+            },
+            annotationTypes: {
+              rows: true,     // Показывать аннотации строк (вариантов)
+              columns: true,  // Показывать аннотации колонок
+              groups: true    // Показывать аннотации групп
             }
           },
           'Accordion Group v2': {
-            padding: 20,
-            spacing: 16,
-            columnSpacing: 16,
-            groupSpacing: 40,
+            padding: 48,
+            spacing: 48,
+            columnSpacing: 48,
+            groupSpacing: 48,
             groupsPerRow: 3,
-            columnDirection: 'vertical',
+            columnDirection: 'horizontal',
             groupProperties: ['Type'],
             columnProperty: null,
-            showAnnotations: false,
+            showAnnotations: true,
             annotationSpacing: 24,
             sortingOrder: {
               'Type': {
@@ -58,64 +63,79 @@ const componentPresets = {
             },
             propertyNamesVisibility: {
               'Type': false  // Показывать только "Primary" вместо "Type:Primary"
+            },
+            annotationTypes: {
+              rows: false,    // Скрывать аннотации строк для групп
+              columns: false, // Скрывать аннотации колонок 
+              groups: true    // Показывать только аннотации групп
             }
           }
         }
-      },
-      'Mobile': {
-        components: {
-          'Accordion v2': {
-            padding: 60,
-            spacing: 10,
-            columnSpacing: 40,
-            groupSpacing: 80,
-            groupsPerRow: 2,
-            columnDirection: 'horizontal',
-            groupProperties: ['Opened', 'Align'],
-            columnProperty: 'Type',
-            showAnnotations: true,
-            annotationSpacing: 24,
-            sortingOrder: {
-              'State': {
-                'Default': 1,
-                'Hover': 2,
-                'Active': 3,
-                'Focus': 4
+              },
+        'Mobile': {
+          components: {
+            'Accordion v2': {
+              padding: 60,
+              spacing: 10,
+              columnSpacing: 40,
+              groupSpacing: 80,
+              groupsPerRow: 2,
+              columnDirection: 'horizontal',
+              groupProperties: ['Opened', 'Align'],
+              columnProperty: 'Type',
+              showAnnotations: true,
+              annotationSpacing: 24,
+              sortingOrder: {
+                'State': {
+                  'Default': 1,
+                  'Hover': 2,
+                  'Active': 3,
+                  'Focus': 4
+                }
+              },
+              propertyNamesVisibility: {
+                'State': false,  // Показывать только "Default"
+                'Opened': true,
+                'Align': true,
+                'Type': true
+              },
+              annotationTypes: {
+                rows: true,     // Показывать аннотации строк
+                columns: true,  // Показывать аннотации колонок
+                groups: true    // Показывать аннотации групп
               }
             },
-            propertyNamesVisibility: {
-              'State': false,  // Показывать только "Default"
-              'Opened': true,
-              'Align': true,
-              'Type': true
-            }
-          },
-          'Accordion Group v2': {
-            padding: 20,
-            spacing: 10,
-            columnSpacing: 40,
-            groupSpacing: 80,
-            groupsPerRow: 2,
-            columnDirection: 'horizontal',
-            groupProperties: ['Opened', 'Align'],
-            columnProperty: 'Type',
-            showAnnotations: true,
-            annotationSpacing: 24,
-            sortingOrder: {
-              'State': {
-                'Default': 1,
-                'Active': 2,
-                'Hover': 3,
-                'Focus': 4
+            'Accordion Group v2': {
+              padding: 20,
+              spacing: 10,
+              columnSpacing: 40,
+              groupSpacing: 80,
+              groupsPerRow: 2,
+              columnDirection: 'horizontal',
+              groupProperties: ['Opened', 'Align'],
+              columnProperty: 'Type',
+              showAnnotations: true,
+              annotationSpacing: 24,
+              sortingOrder: {
+                'State': {
+                  'Default': 1,
+                  'Active': 2,
+                  'Hover': 3,
+                  'Focus': 4
+                }
+              },
+              propertyNamesVisibility: {
+                'State': false,  // Показывать только "Default"
+                'Opened': true,
+                'Align': true,
+                'Type': true
+              },
+              annotationTypes: {
+                rows: true,     // Показывать аннотации строк
+                columns: true,  // Показывать аннотации колонок
+                groups: true    // Показывать аннотации групп
               }
-            },
-            propertyNamesVisibility: {
-              'State': false,  // Показывать только "Default"
-              'Opened': true,
-              'Align': true,
-              'Type': true
             }
-          }
         }
       }
     },
@@ -154,6 +174,11 @@ const componentPresets = {
               'State': false,  // Показывать только "Default" вместо "State:Default"
               'Size': true,    // Показывать "Size:Small"
               'Type': true
+            },
+            annotationTypes: {
+              rows: true,     // Показывать аннотации строк
+              columns: true,  // Показывать аннотации колонок
+              groups: true    // Показывать аннотации групп
             }
           },
           'Phone Input': {
@@ -178,6 +203,11 @@ const componentPresets = {
             propertyNamesVisibility: {
               'State': false,  // Показывать только "Default"
               'Size': true
+            },
+            annotationTypes: {
+              rows: true,     // Показывать аннотации строк
+              columns: true,  // Показывать аннотации колонок
+              groups: false   // Скрывать аннотации групп для Phone Input
             }
           },
           'Masked Input': {
@@ -203,6 +233,11 @@ const componentPresets = {
             propertyNamesVisibility: {
               'State': false,  // Показывать только "Default"
               'Type': true
+            },
+            annotationTypes: {
+              rows: true,     // Показывать аннотации строк
+              columns: true,  // Показывать аннотации колонок
+              groups: true    // Показывать аннотации групп
             }
           },
           'Number Input': {
@@ -229,6 +264,11 @@ const componentPresets = {
             propertyNamesVisibility: {
               'State': false,  // Показывать только "Default"
               'Size': true
+            },
+            annotationTypes: {
+              rows: true,     // Показывать аннотации строк
+              columns: true,  // Показывать аннотации колонок
+              groups: true    // Показывать аннотации групп
             }
           },
           'Password Input': {
@@ -260,6 +300,11 @@ const componentPresets = {
               'State': false,     // Показывать только "Default"
               'Visibility': true, // Показывать "Visibility:Hidden"
               'Size': true
+            },
+            annotationTypes: {
+              rows: true,     // Показывать аннотации строк
+              columns: true,  // Показывать аннотации колонок
+              groups: true    // Показывать аннотации групп
             }
           },
           'Custom Input': {
@@ -284,6 +329,11 @@ const componentPresets = {
             propertyNamesVisibility: {
               'State': false,  // Показывать только "Default"
               'Type': true
+            },
+            annotationTypes: {
+              rows: true,     // Показывать аннотации строк
+              columns: true,  // Показывать аннотации колонок
+              groups: true    // Показывать аннотации групп
             }
           }
         }
@@ -317,6 +367,11 @@ const componentPresets = {
               'State': false,  // Показывать только "Default"
               'Size': true,    // Показывать "Size:Medium"
               'Type': true
+            },
+            annotationTypes: {
+              rows: true,     // Показывать аннотации строк
+              columns: true,  // Показывать аннотации колонок
+              groups: true    // Показывать аннотации групп
             }
           },
           'Phone Input': {
@@ -376,6 +431,11 @@ const componentPresets = {
         propertyNamesVisibility: {
           'Type': false,      // Показывать только "Info" вместо "Type:Info"
           'Info Type': true   // Показывать "Info Type:Default"
+        },
+        annotationTypes: {
+          rows: true,     // Показывать аннотации строк
+          columns: true,  // Показывать аннотации колонок
+          groups: true    // Показывать аннотации групп
         }
     },
     'Avatar': {
@@ -407,6 +467,11 @@ const componentPresets = {
         propertyNamesVisibility: {
           'Size': true,   // Показывать "Size:M"
           'State': false  // Показывать только "Default"
+        },
+        annotationTypes: {
+          rows: false,    // Скрывать аннотации строк для Avatar
+          columns: true,  // Показывать аннотации колонок (размеры)
+          groups: true    // Показывать аннотации групп (состояния)
         }
     }
   }

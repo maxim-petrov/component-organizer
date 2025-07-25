@@ -275,6 +275,11 @@ function loadPresets() {
             propertyNamesVisibility: {
               'Type': false,      // Показывать только "Info" вместо "Type:Info"
               'Info Type': true   // Показывать "Info Type:Default"
+            },
+            annotationTypes: {
+              rows: true,     // Показывать аннотации строк
+              columns: true,  // Показывать аннотации колонок
+              groups: true    // Показывать аннотации групп
             }
           },
                   'Avatar': {
@@ -306,6 +311,11 @@ function loadPresets() {
             propertyNamesVisibility: {
               'Size': true,   // Показывать "Size:M"
               'State': false  // Показывать только "Default"
+            },
+            annotationTypes: {
+              rows: false,    // Скрывать аннотации строк для Avatar
+              columns: true,  // Показывать аннотации колонок (размеры)
+              groups: true    // Показывать аннотации групп (состояния)
             }
           }
       }
@@ -1047,7 +1057,8 @@ function alignComponentVariants(
   showAnnotations = false,
   annotationSpacing = 24,
   sortingOrder = null,
-  propertyNamesVisibility = null
+  propertyNamesVisibility = null,
+  annotationTypes = null
 ) {
   if (!componentSet || componentSet.type !== 'COMPONENT_SET') {
     figma.notify('Выберите набор компонентов (Component Set)');
@@ -1080,7 +1091,7 @@ function alignComponentVariants(
     if (groupProperties.length > 0 || columnProperty) {
       // Многоуровневая группировка
       const groups = createMultiLevelGroups(variants, groupProperties, columnProperty, sortingOrder);
-      setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing, groupProperties, columnProperty, propertyNamesVisibility);
+      setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing, groupProperties, columnProperty, propertyNamesVisibility, annotationTypes);
       
       const groupCount = Object.keys(groups).length;
       const totalColumns = Object.values(groups).reduce((max, group) => 
@@ -1091,7 +1102,7 @@ function alignComponentVariants(
       figma.notify(`Создано ${groupCount} групп (${rows} строк по ${groupsPerRow} макс.) с ${totalColumns} максимум колонок в группе, направление: ${directionText}`);
     } else {
      // Простая сетка без группировки
-     setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection, annotationSpacing, sortingOrder, propertyNamesVisibility);
+     setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection, annotationSpacing, sortingOrder, propertyNamesVisibility, annotationTypes);
      figma.notify(`Варианты выровнены в простую сетку`);
    }
 
@@ -1102,7 +1113,7 @@ function alignComponentVariants(
 }
 
 // Функция для создания многоуровневого Grid layout
-function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing = 24, groupProperties = [], columnProperty = null, propertyNamesVisibility = null) {
+function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing = 24, groupProperties = [], columnProperty = null, propertyNamesVisibility = null, annotationTypes = null) {
   const parentNode = componentSet.parent;
   const componentSetX = componentSet.x;
   const componentSetY = componentSet.y;
@@ -1248,8 +1259,9 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           const columnVariants = group[columnKey];
           const columnX = currentColumnX;
           
-          // Создаем аннотацию для колонки сверху (Направление колонок внутри групп: По горизонтали) (если включены аннотации, есть название колонки и она еще не создана в этой позиции)
-          if (showAnnotations && columnKey !== 'default' && annotationsFolder && !createdAnnotations.has(`column-pos-${columnX}`)) {
+                  // Создаем аннотацию для колонки сверху (Направление колонок внутри групп: По горизонтали) (если включены аннотации, есть название колонки и она еще не создана в этой позиции)
+        if (showAnnotations && columnKey !== 'default' && annotationsFolder && !createdAnnotations.has(`column-pos-${columnX}`) && 
+            (!annotationTypes || annotationTypes.columns !== false)) {
             // Рассчитываем позицию уровня 2 с правильными отступами 24px
             const variantAnnotationHeight = 25; // примерная высота рамки (hug content адаптируется)
             const columnAnnotationHeight = 25;
@@ -1300,7 +1312,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             variant.y = currentVariantY;
             
             // Создаем аннотацию для строки (если включены аннотации)
-            if (showAnnotations && annotationsFolder) {
+            if (showAnnotations && annotationsFolder && (!annotationTypes || annotationTypes.rows !== false)) {
               const rowY = currentVariantY;
               const rowKey = `row-${rowY}`;
               
@@ -1378,7 +1390,8 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
         groupWidth = totalGroupWidth;
         
         // Создаем аннотацию для группы сверху по центру (если включены аннотации, есть название группы и она еще не создана)
-        if (showAnnotations && groupKey !== 'default' && annotationsFolder && !createdAnnotations.has(`group-${groupKey}`)) {
+        if (showAnnotations && groupKey !== 'default' && annotationsFolder && !createdAnnotations.has(`group-${groupKey}`) && 
+            (!annotationTypes || annotationTypes.groups !== false)) {
           const groupCenterX = currentGroupX + groupWidth / 2;
           // Сохраняем значения в локальных переменных для использования в .then()
           const groupStartX = currentGroupX;
@@ -1446,7 +1459,8 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
         });
         
         // Создаем аннотацию для группы слева по центру (Направление колонок внутри групп: По вертикали) (если включены аннотации, есть название группы и она еще не создана)
-        if (showAnnotations && groupKey !== 'default' && annotationsFolder && !createdAnnotations.has(`group-${groupKey}`)) {
+        if (showAnnotations && groupKey !== 'default' && annotationsFolder && !createdAnnotations.has(`group-${groupKey}`) && 
+            (!annotationTypes || annotationTypes.groups !== false)) {
           const groupCenterY = groupStartY + totalGroupHeight / 2;
           // Сохраняем значения в локальных переменных для использования в .then()
           const currentGroupStartY = groupStartY;
@@ -1493,7 +1507,8 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           const columnVariants = group[columnKey];
           
           // Создаем аннотацию для колонки слева (если включены аннотации, есть название колонки и она еще не создана в этой позиции)
-          if (showAnnotations && columnKey !== 'default' && annotationsFolder && !createdAnnotations.has(`column-pos-${currentColumnY}`)) {
+          if (showAnnotations && columnKey !== 'default' && annotationsFolder && !createdAnnotations.has(`column-pos-${currentColumnY}`) && 
+              (!annotationTypes || annotationTypes.columns !== false)) {
             // Рассчитываем позицию уровня 2 с правильными отступами 24px
             const variantAnnotationWidth = 116; // примерная ширина рамки (hug content адаптируется)
             const columnAnnotationWidth = 116;
@@ -1533,7 +1548,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             variant.y = currentVariantY;
             
             // Создаем аннотацию для строки (если включены аннотации)
-            if (showAnnotations && annotationsFolder) {
+            if (showAnnotations && annotationsFolder && (!annotationTypes || annotationTypes.rows !== false)) {
               const rowX = currentGroupX;
               const rowKey = `row-${rowX}`;
               
@@ -1645,7 +1660,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
 }
 
 // Функция для создания простого Grid layout (резервная)
-function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection = 'horizontal', annotationSpacing = 24, sortingOrder = null, propertyNamesVisibility = null) {
+function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection = 'horizontal', annotationSpacing = 24, sortingOrder = null, propertyNamesVisibility = null, annotationTypes = null) {
   const parentNode = componentSet.parent;
   const componentSetX = componentSet.x;
   const componentSetY = componentSet.y;
@@ -1767,7 +1782,8 @@ figma.ui.onmessage = (msg) => {
       preset.showAnnotations,
       preset.annotationSpacing,
       preset.sortingOrder,
-      preset.propertyNamesVisibility
+      preset.propertyNamesVisibility,
+      preset.annotationTypes
     );
   }
   
@@ -1791,7 +1807,8 @@ figma.ui.onmessage = (msg) => {
       showAnnotations: msg.showAnnotations || false,
       annotationSpacing: msg.annotationSpacing || 24,
       sortingOrder: msg.sortingOrder || null,
-      propertyNamesVisibility: msg.propertyNamesVisibility || null
+      propertyNamesVisibility: msg.propertyNamesVisibility || null,
+      annotationTypes: msg.annotationTypes || null
     };
 
     alignComponentVariants(
@@ -1807,7 +1824,8 @@ figma.ui.onmessage = (msg) => {
       settings.showAnnotations,
       settings.annotationSpacing,
       settings.sortingOrder,
-      settings.propertyNamesVisibility
+      settings.propertyNamesVisibility,
+      settings.annotationTypes
     );
   }
   

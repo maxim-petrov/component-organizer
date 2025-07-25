@@ -481,6 +481,25 @@
       </div>
       
       <div class="setting-group">
+        <label class="setting-label">Типы аннотаций:</label>
+        <div style="display: flex; flex-direction: column; gap: 6px; margin-top: 6px;">
+          <div class="setting-row">
+            <input type="checkbox" id="annotation-rows-checkbox" checked>
+            <label class="setting-label" for="annotation-rows-checkbox">📝 Строки (варианты)</label>
+          </div>
+          <div class="setting-row">
+            <input type="checkbox" id="annotation-columns-checkbox" checked>
+            <label class="setting-label" for="annotation-columns-checkbox">📋 Колонки</label>
+          </div>
+          <div class="setting-row">
+            <input type="checkbox" id="annotation-groups-checkbox" checked>
+            <label class="setting-label" for="annotation-groups-checkbox">📁 Группы</label>
+          </div>
+        </div>
+        <div class="group-info">Выберите какие типы аннотаций показывать</div>
+      </div>
+      
+      <div class="setting-group">
         <label class="setting-label">Направление колонок внутри групп:</label>
         <div class="radio-group">
           <label class="radio-option">
@@ -595,6 +614,7 @@
       // Загружаем настройки сортировки
       window.pendingSortingOrder = settings.sortingOrder || null;
       window.pendingPropertyNamesVisibility = settings.propertyNamesVisibility || null;
+      window.pendingAnnotationTypes = settings.annotationTypes || null;
       const customSortingCheckbox = document.getElementById('use-custom-sorting-checkbox');
       if (settings.sortingOrder && Object.keys(settings.sortingOrder).length > 0) {
         customSortingCheckbox.checked = true;
@@ -602,6 +622,13 @@
       } else {
         customSortingCheckbox.checked = false;
         document.getElementById('sorting-order-section').style.display = 'none';
+      }
+      
+      // Загружаем настройки типов аннотаций
+      if (settings.annotationTypes) {
+        document.getElementById('annotation-rows-checkbox').checked = settings.annotationTypes.rows !== false;
+        document.getElementById('annotation-columns-checkbox').checked = settings.annotationTypes.columns !== false;
+        document.getElementById('annotation-groups-checkbox').checked = settings.annotationTypes.groups !== false;
       }
     }
 
@@ -646,6 +673,7 @@
        window.pendingColumnProperty = null;
        window.pendingSortingOrder = null;
        window.pendingPropertyNamesVisibility = null;
+       window.pendingAnnotationTypes = null;
     }
 
     // Функция для загрузки предустановки по платформе
@@ -931,8 +959,17 @@
         propertyNamesVisibility[property] = checkbox.checked;
       });
       
-      return Object.keys(propertyNamesVisibility).length > 0 ? propertyNamesVisibility : null;
-    }
+             return Object.keys(propertyNamesVisibility).length > 0 ? propertyNamesVisibility : null;
+     }
+
+     // Функция для получения настроек типов аннотаций из UI
+     function getAnnotationTypesFromUI() {
+       return {
+         rows: document.getElementById('annotation-rows-checkbox').checked,
+         columns: document.getElementById('annotation-columns-checkbox').checked,
+         groups: document.getElementById('annotation-groups-checkbox').checked
+       };
+     }
     
     // Обработчики drag and drop
     let draggedElement = null;
@@ -1014,9 +1051,10 @@
       const groupProperties = getSelectedGroupProperties();
       const columnProperty = document.getElementById('column-property-select').value;
       const showAnnotations = document.getElementById('show-annotations-checkbox').checked;
-      const annotationSpacing = parseInt(document.getElementById('annotation-spacing-input').value) || 24;
-              const sortingOrder = getSortingOrderFromUI();
+              const annotationSpacing = parseInt(document.getElementById('annotation-spacing-input').value) || 24;
+        const sortingOrder = getSortingOrderFromUI();
         const propertyNamesVisibility = getPropertyNamesVisibilityFromUI();
+        const annotationTypes = getAnnotationTypesFromUI();
         
         parent.postMessage({ 
         pluginMessage: { 
@@ -1032,7 +1070,8 @@
           showAnnotations: showAnnotations,
           annotationSpacing: annotationSpacing,
           sortingOrder: sortingOrder,
-          propertyNamesVisibility: propertyNamesVisibility
+          propertyNamesVisibility: propertyNamesVisibility,
+          annotationTypes: annotationTypes
         } 
       }, '*');
     });
