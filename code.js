@@ -7,7 +7,7 @@ figma.showUI(__html__, { width: 360, height: 620 });
 
 // Предустановки компонентов - загружаются из presets.js
 let componentPresets = {};
-let getComponentPreset, getComponentGroup, getAllPresets, getAllGroups, addComponentPreset;
+let getComponentPreset, getComponentPlatforms, getComponentGroup, getAllPresets, getAllGroups, addComponentPreset;
 
 // Функция для загрузки предустановок
 function loadPresets() {
@@ -22,20 +22,21 @@ function loadPresets() {
         'Accordion': {
           name: 'Accordion',
           description: 'Компоненты аккордеона',
-          components: {
-            'AccordionRow v2': {
-              padding: 140,
-              spacing: 20,
-              columnSpacing: 40,
-              groupSpacing: 80,
-              groupsPerRow: 2,
-              columnDirection: 'horizontal',
-              groupProperties: ['Opened', 'Align'],
-              columnProperty: 'Type',
-              showAnnotations: true,
-              annotationSpacing: 24
-            },
-            'Accordion Group v2': {
+          'Desktop': {
+            components: {
+              'AccordionRow v2': {
+                padding: 140,
+                spacing: 20,
+                columnSpacing: 40,
+                groupSpacing: 80,
+                groupsPerRow: 2,
+                columnDirection: 'horizontal',
+                groupProperties: ['Opened', 'Align'],
+                columnProperty: 'Type',
+                showAnnotations: true,
+                annotationSpacing: 24
+              },
+                          'Accordion Group v2': {
               padding: 20,
               spacing: 16,
               columnSpacing: 16,
@@ -45,85 +46,201 @@ function loadPresets() {
               groupProperties: ['Type'],
               columnProperty: null,
               showAnnotations: false,
-              annotationSpacing: 24
+              annotationSpacing: 24,
+              sortingOrder: {
+                'Type': {
+                  'Primary': 1,
+                  'Secondary': 2,
+                  'Tertiary': 3
+                }
+              }
+            }
+            }
+          },
+          'Mobile': {
+            components: {
+                        'Accordion v2': {
+            padding: 60,
+            spacing: 10,
+            columnSpacing: 40,
+            groupSpacing: 80,
+            groupsPerRow: 2,
+            columnDirection: 'horizontal',
+            groupProperties: ['Opened', 'Align'],
+            columnProperty: 'Type',
+            showAnnotations: true,
+            annotationSpacing: 24,
+            sortingOrder: {
+              'State': {
+                'Default': 1,
+                'Hover': 2,
+                'Active': 3,
+                'Focus': 4
+              }
+            }
+          },
+          'Accordion Group v2': {
+            padding: 20,
+            spacing: 10,
+            columnSpacing: 40,
+            groupSpacing: 80,
+            groupsPerRow: 2,
+            columnDirection: 'horizontal',
+            groupProperties: ['Opened', 'Align'],
+            columnProperty: 'Type',
+            showAnnotations: true,
+            annotationSpacing: 24,
+            sortingOrder: {
+              'State': {
+                'Default': 1,
+                'Active': 2,
+                'Hover': 3,
+                'Focus': 4
+              }
+            }
+          }
             }
           }
         },
         'Input': {
           name: 'Input',
           description: 'Компоненты ввода данных',
-          components: {
-            'Input': {
-              padding: 20,
-              spacing: 16,
-              columnSpacing: 40,
-              groupSpacing: 80,
-              groupsPerRow: 3,
-              columnDirection: 'horizontal',
-              groupProperties: ['State', 'Size'],
-              columnProperty: 'Type',
-              showAnnotations: true,
-              annotationSpacing: 24
-            },
-            'Phone Input': {
-              padding: 20,
-              spacing: 16,
-              columnSpacing: 40,
-              groupSpacing: 80,
-              groupsPerRow: 2,
-              columnDirection: 'horizontal',
-              groupProperties: ['State'],
-              columnProperty: 'Size',
-              showAnnotations: true,
-              annotationSpacing: 24
-            },
-            'Masked Input': {
-              padding: 20,
-              spacing: 16,
-              columnSpacing: 40,
-              groupSpacing: 80,
-              groupsPerRow: 2,
-              columnDirection: 'horizontal',
-              groupProperties: ['State'],
-              columnProperty: 'Type',
-              showAnnotations: true,
-              annotationSpacing: 24
-            },
-            'Number Input': {
-              padding: 20,
-              spacing: 16,
-              columnSpacing: 40,
-              groupSpacing: 80,
-              groupsPerRow: 3,
-              columnDirection: 'horizontal',
-              groupProperties: ['State'],
-              columnProperty: 'Size',
-              showAnnotations: true,
-              annotationSpacing: 24
-            },
-            'Password Input': {
-              padding: 20,
-              spacing: 16,
-              columnSpacing: 40,
-              groupSpacing: 80,
-              groupsPerRow: 2,
-              columnDirection: 'horizontal',
-              groupProperties: ['State', 'Visibility'],
-              columnProperty: 'Size',
-              showAnnotations: true,
-              annotationSpacing: 24
-            },
-            'Custom Input': {
-              padding: 20,
-              spacing: 16,
-              columnSpacing: 40,
-              groupSpacing: 80,
-              groupsPerRow: 2,
-              columnDirection: 'horizontal',
-              groupProperties: ['State'],
-              columnProperty: 'Type',
-              showAnnotations: true,
-              annotationSpacing: 24
+          'Desktop': {
+            components: {
+              'Input': {
+                padding: 20,
+                spacing: 16,
+                columnSpacing: 40,
+                groupSpacing: 80,
+                groupsPerRow: 3,
+                columnDirection: 'horizontal',
+                groupProperties: ['State', 'Size'],
+                columnProperty: 'Type',
+                showAnnotations: true,
+                annotationSpacing: 24,
+                sortingOrder: {
+                  'State': {
+                    'Default': 1,
+                    'Hover': 2,
+                    'Active': 3,
+                    'Focus': 4,
+                    'Error': 5,
+                    'Disabled': 6
+                  },
+                  'Size': {
+                    'Small': 1,
+                    'Medium': 2,
+                    'Large': 3
+                  }
+                }
+              },
+              'Phone Input': {
+                padding: 20,
+                spacing: 16,
+                columnSpacing: 40,
+                groupSpacing: 80,
+                groupsPerRow: 2,
+                columnDirection: 'horizontal',
+                groupProperties: ['State'],
+                columnProperty: 'Size',
+                showAnnotations: true,
+                annotationSpacing: 24
+              },
+              'Masked Input': {
+                padding: 20,
+                spacing: 16,
+                columnSpacing: 40,
+                groupSpacing: 80,
+                groupsPerRow: 2,
+                columnDirection: 'horizontal',
+                groupProperties: ['State'],
+                columnProperty: 'Type',
+                showAnnotations: true,
+                annotationSpacing: 24
+              },
+              'Number Input': {
+                padding: 20,
+                spacing: 16,
+                columnSpacing: 40,
+                groupSpacing: 80,
+                groupsPerRow: 3,
+                columnDirection: 'horizontal',
+                groupProperties: ['State'],
+                columnProperty: 'Size',
+                showAnnotations: true,
+                annotationSpacing: 24
+              },
+              'Password Input': {
+                padding: 20,
+                spacing: 16,
+                columnSpacing: 40,
+                groupSpacing: 80,
+                groupsPerRow: 2,
+                columnDirection: 'horizontal',
+                groupProperties: ['State', 'Visibility'],
+                columnProperty: 'Size',
+                showAnnotations: true,
+                annotationSpacing: 24
+              },
+              'Custom Input': {
+                padding: 20,
+                spacing: 16,
+                columnSpacing: 40,
+                groupSpacing: 80,
+                groupsPerRow: 2,
+                columnDirection: 'horizontal',
+                groupProperties: ['State'],
+                columnProperty: 'Type',
+                showAnnotations: true,
+                annotationSpacing: 24
+              }
+            }
+          },
+          'Mobile': {
+            components: {
+                              'Input': {
+                  padding: 16,
+                  spacing: 12,
+                  columnSpacing: 30,
+                  groupSpacing: 60,
+                  groupsPerRow: 2,
+                  columnDirection: 'horizontal',
+                  groupProperties: ['State', 'Size'],
+                  columnProperty: 'Type',
+                  showAnnotations: true,
+                  annotationSpacing: 20,
+                  sortingOrder: {
+                    'State': {
+                      'Default': 1,
+                      'Focus': 2,
+                      'Error': 3,
+                      'Disabled': 4
+                    },
+                    'Size': {
+                      'Medium': 1,
+                      'Large': 2
+                    }
+                  }
+                },
+                              'Phone Input': {
+                  padding: 16,
+                  spacing: 12,
+                  columnSpacing: 30,
+                  groupSpacing: 60,
+                  groupsPerRow: 1,
+                  columnDirection: 'vertical',
+                  groupProperties: ['State'],
+                  columnProperty: 'Size',
+                  showAnnotations: true,
+                  annotationSpacing: 20,
+                  sortingOrder: {
+                    'State': {
+                      'Default': 1,
+                      'Focus': 2,
+                      'Error': 3
+                    }
+                  }
+                }
             }
           }
         }
@@ -131,46 +248,104 @@ function loadPresets() {
 
       // Одиночные компоненты (не многосоставные)
       components: {
-        'Alert': {
-          padding: 20,
-          spacing: 40,
-          columnSpacing: 80,
-          groupSpacing: 160,
-          groupsPerRow: 2,
-          columnDirection: 'horizontal',
-          groupProperties: ['Type'],
-          columnProperty: 'Info Type',
-          showAnnotations: true,
-          annotationSpacing: 24
-        },
-        'Avatar': {
-          padding: 16,
-          spacing: 20,
-          columnSpacing: 40,
-          groupSpacing: 80,
-          groupsPerRow: 4,
-          columnDirection: 'horizontal',
-          groupProperties: ['State'],
-          columnProperty: 'Size',
-          showAnnotations: true,
-          annotationSpacing: 24
-        }
+                  'Alert': {
+            padding: 20,
+            spacing: 40,
+            columnSpacing: 80,
+            groupSpacing: 160,
+            groupsPerRow: 2,
+            columnDirection: 'horizontal',
+            groupProperties: ['Type'],
+            columnProperty: 'Info Type',
+            showAnnotations: true,
+            annotationSpacing: 24,
+            sortingOrder: {
+              'Type': {
+                'Info': 1,
+                'Success': 2,
+                'Warning': 3,
+                'Error': 4
+              },
+              'Info Type': {
+                'Default': 1,
+                'Compact': 2,
+                'Detailed': 3
+              }
+            },
+            propertyNamesVisibility: {
+              'Type': false,      // Показывать только "Info" вместо "Type:Info"
+              'Info Type': true   // Показывать "Info Type:Default"
+            },
+            annotationTypes: {
+              rows: true,     // Показывать аннотации строк
+              columns: true,  // Показывать аннотации колонок
+              groups: true    // Показывать аннотации групп
+            }
+          },
+                  'Avatar': {
+            padding: 16,
+            spacing: 20,
+            columnSpacing: 40,
+            groupSpacing: 80,
+            groupsPerRow: 4,
+            columnDirection: 'horizontal',
+            groupProperties: ['State'],
+            columnProperty: 'Size',
+            showAnnotations: true,
+            annotationSpacing: 24,
+            sortingOrder: {
+              'Size': {
+                'XS': 1,
+                'S': 2,
+                'M': 3,
+                'L': 4,
+                'XL': 5
+              },
+              'State': {
+                'Default': 1,
+                'Hover': 2,
+                'Selected': 3,
+                'Disabled': 4
+              }
+            },
+            propertyNamesVisibility: {
+              'Size': true,   // Показывать "Size:M"
+              'State': false  // Показывать только "Default"
+            },
+            annotationTypes: {
+              rows: false,    // Скрывать аннотации строк для Avatar
+              columns: true,  // Показывать аннотации колонок (размеры)
+              groups: true    // Показывать аннотации групп (состояния)
+            }
+          }
       }
     };
 
     // Функции для работы с предустановками
-    getComponentPreset = function(componentName) {
+    getComponentPreset = function(componentName, platform = null) {
       // Сначала ищем среди одиночных компонентов
       if (componentPresets.components && componentPresets.components[componentName]) {
         return componentPresets.components[componentName];
       }
 
-      // Затем ищем среди групп
+      // Затем ищем среди групп с учетом платформы
       if (componentPresets.groups) {
         for (const groupKey in componentPresets.groups) {
           const group = componentPresets.groups[groupKey];
-          if (group.components && group.components[componentName]) {
-            return group.components[componentName];
+          
+          // Если платформа указана, ищем только в ней
+          if (platform && group[platform] && group[platform].components && group[platform].components[componentName]) {
+            return group[platform].components[componentName];
+          }
+          
+          // Если платформа не указана, ищем в любой доступной (приоритет Desktop)
+          if (!platform) {
+            if (group['Desktop'] && group['Desktop'].components && group['Desktop'].components[componentName]) {
+              return group['Desktop'].components[componentName];
+            }
+            if (group['Mobile'] && group['Mobile'].components && group['Mobile'].components[componentName]) {
+              return group['Mobile'].components[componentName];
+            }
           }
         }
       }
@@ -178,16 +353,49 @@ function loadPresets() {
       return null;
     };
 
+    getComponentPlatforms = function(componentName) {
+      const platforms = [];
+      
+      if (componentPresets.groups) {
+        for (const groupKey in componentPresets.groups) {
+          const group = componentPresets.groups[groupKey];
+          
+          if (group['Desktop'] && group['Desktop'].components && group['Desktop'].components[componentName]) {
+            platforms.push('Desktop');
+          }
+          if (group['Mobile'] && group['Mobile'].components && group['Mobile'].components[componentName]) {
+            platforms.push('Mobile');
+          }
+        }
+      }
+      
+      return platforms;
+    };
+
     getComponentGroup = function(componentName) {
       if (componentPresets.groups) {
         for (const groupKey in componentPresets.groups) {
           const group = componentPresets.groups[groupKey];
-          if (group.components && group.components[componentName]) {
+          const platforms = [];
+          const allComponents = new Set();
+          
+          // Собираем информацию о всех платформах и компонентах
+          ['Desktop', 'Mobile'].forEach(platform => {
+            if (group[platform] && group[platform].components) {
+              if (group[platform].components[componentName]) {
+                platforms.push(platform);
+              }
+              Object.keys(group[platform].components).forEach(comp => allComponents.add(comp));
+            }
+          });
+          
+          if (platforms.length > 0) {
             return {
               key: groupKey,
               name: group.name,
               description: group.description,
-              components: Object.keys(group.components)
+              platforms: platforms,
+              components: Array.from(allComponents)
             };
           }
         }
@@ -195,7 +403,7 @@ function loadPresets() {
       return null;
     };
 
-    getAllPresets = function() {
+    getAllPresets = function(platform = null) {
       const allPresets = {};
       
       // Добавляем одиночные компоненты
@@ -207,8 +415,19 @@ function loadPresets() {
       if (componentPresets.groups) {
         for (const groupKey in componentPresets.groups) {
           const group = componentPresets.groups[groupKey];
-          if (group.components) {
-            Object.assign(allPresets, group.components);
+          
+          if (platform) {
+            // Если указана платформа, берем только её
+            if (group[platform] && group[platform].components) {
+              Object.assign(allPresets, group[platform].components);
+            }
+          } else {
+            // Если платформа не указана, берем все (приоритет Desktop)
+            ['Desktop', 'Mobile'].forEach(plt => {
+              if (group[plt] && group[plt].components) {
+                Object.assign(allPresets, group[plt].components);
+              }
+            });
           }
         }
       }
@@ -220,10 +439,21 @@ function loadPresets() {
       return componentPresets.groups || {};
     };
 
-    addComponentPreset = function(componentName, preset, groupName = null) {
+    addComponentPreset = function(componentName, preset, groupName = null, platform = null) {
       if (groupName && componentPresets.groups && componentPresets.groups[groupName]) {
-        // Добавляем в группу
-        componentPresets.groups[groupName].components[componentName] = preset;
+        if (platform && ['Desktop', 'Mobile'].includes(platform)) {
+          // Добавляем в группу на определенной платформе
+          if (!componentPresets.groups[groupName][platform]) {
+            componentPresets.groups[groupName][platform] = { components: {} };
+          }
+          componentPresets.groups[groupName][platform].components[componentName] = preset;
+        } else {
+          // Добавляем в Desktop по умолчанию
+          if (!componentPresets.groups[groupName]['Desktop']) {
+            componentPresets.groups[groupName]['Desktop'] = { components: {} };
+          }
+          componentPresets.groups[groupName]['Desktop'].components[componentName] = preset;
+        }
       } else {
         // Добавляем как одиночный компонент
         if (!componentPresets.components) {
@@ -238,6 +468,7 @@ function loadPresets() {
     // Устанавливаем пустые предустановки в случае ошибки
     componentPresets = { groups: {}, components: {} };
     getComponentPreset = () => null;
+    getComponentPlatforms = () => [];
     getComponentGroup = () => null;
     getAllPresets = () => ({});
     getAllGroups = () => ({});
@@ -292,6 +523,8 @@ function updateSelectionInfo() {
     const variantCount = componentSet.children.filter(child => child.type === 'COMPONENT').length;
     const preset = getComponentPreset(componentSet.name);
     const group = getComponentGroup(componentSet.name);
+    const platforms = getComponentPlatforms(componentSet.name);
+    const savedSettings = loadComponentSettings(componentSet);
     
     figma.ui.postMessage({ 
       type: 'selection-updated', 
@@ -301,7 +534,9 @@ function updateSelectionInfo() {
         variantCount: variantCount,
         hasValidSelection: true,
         preset: preset,
-        group: group
+        group: group,
+        platforms: platforms,
+        savedSettings: savedSettings
       }
     });
   } else {
@@ -313,7 +548,8 @@ function updateSelectionInfo() {
         variantCount: 0,
         hasValidSelection: false,
         preset: null,
-        group: null
+        group: null,
+        platforms: []
       }
     });
   }
@@ -331,16 +567,125 @@ function createGroupKey(variant, groupProperties) {
 }
 
 // Функция для создания ключа сортировки внутри группы
-function createSortingKey(variant, excludeProperties) {
+function createSortingKey(variant, excludeProperties, sortingOrder = null) {
   if (!variant.variantProperties) return '';
   
   const sortingProperties = Object.keys(variant.variantProperties)
     .filter(prop => !excludeProperties.includes(prop))
     .sort();
-    
+  
+  // Если есть кастомный порядок сортировки, используем его
+  if (sortingOrder) {
+    return sortingProperties
+      .map(prop => {
+        const value = variant.variantProperties[prop];
+        // Получаем порядок для свойства, если он определен
+        const propOrder = sortingOrder[prop];
+        let sortKey;
+        
+        if (propOrder && propOrder[value] !== undefined) {
+          // Используем кастомный порядок (добавляем ведущие нули для правильной сортировки)
+          sortKey = String(propOrder[value]).padStart(3, '0');
+        } else {
+          // Если кастомный порядок не определен, используем алфавитный порядок
+          // но добавляем большое число, чтобы такие элементы были в конце
+          sortKey = `999${value}`;
+        }
+        
+        return `${prop}:${sortKey}`;
+      })
+      .join('|');
+  }
+  
+  // Стандартная алфавитная сортировка
   return sortingProperties
     .map(prop => `${prop}:${variant.variantProperties[prop]}`)
     .join('|');
+}
+
+// Функция для сортировки групп согласно пользовательским настройкам
+function sortGroupKeys(groupKeys, groupProperties, sortingOrder = null) {
+  if (!sortingOrder || groupProperties.length === 0) {
+    // Если нет кастомного порядка, используем алфавитную сортировку
+    return groupKeys.sort();
+  }
+  
+  return groupKeys.sort((keyA, keyB) => {
+    // Разбираем ключи групп на свойства и значения
+    // Пример ключа: "Size:Large|State:Default" или "Size:Large"
+    const propsA = {};
+    const propsB = {};
+    
+    // Парсим ключ A
+    if (keyA !== 'default') {
+      keyA.split('|').forEach(part => {
+        const [prop, value] = part.split(':');
+        if (prop && value) {
+          propsA[prop] = value;
+        }
+      });
+    }
+    
+    // Парсим ключ B
+    if (keyB !== 'default') {
+      keyB.split('|').forEach(part => {
+        const [prop, value] = part.split(':');
+        if (prop && value) {
+          propsB[prop] = value;
+        }
+      });
+    }
+    
+    // Сравниваем по каждому свойству группировки в порядке приоритета
+    for (const prop of groupProperties) {
+      const valueA = propsA[prop] || '';
+      const valueB = propsB[prop] || '';
+      
+      // Получаем порядок для этого свойства из пользовательских настроек
+      const propOrder = sortingOrder[prop];
+      
+      if (propOrder) {
+        const orderA = propOrder[valueA] !== undefined ? propOrder[valueA] : 999;
+        const orderB = propOrder[valueB] !== undefined ? propOrder[valueB] : 999;
+        
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+      } else {
+        // Если для свойства нет кастомного порядка, используем алфавитную сортировку
+        const comparison = valueA.localeCompare(valueB);
+        if (comparison !== 0) {
+          return comparison;
+        }
+      }
+    }
+    
+    // Если все свойства равны, используем алфавитную сортировку ключей
+    return keyA.localeCompare(keyB);
+  });
+}
+
+// Функция для сортировки колонок согласно пользовательским настройкам
+function sortColumnKeys(columnKeys, columnProperty, sortingOrder = null) {
+  if (!sortingOrder || !columnProperty || !sortingOrder[columnProperty]) {
+    // Если нет кастомного порядка для свойства колонок, используем алфавитную сортировку
+    return columnKeys.sort();
+  }
+  
+  const propOrder = sortingOrder[columnProperty];
+  
+  return columnKeys.sort((keyA, keyB) => {
+    // Получаем порядок для каждого значения
+    const orderA = propOrder[keyA] !== undefined ? propOrder[keyA] : 999;
+    const orderB = propOrder[keyB] !== undefined ? propOrder[keyB] : 999;
+    
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+    
+    // Если порядок одинаковый, используем алфавитную сортировку
+    return keyA.localeCompare(keyB);
+  });
 }
 
 // Функция для создания папки аннотаций
@@ -729,7 +1074,7 @@ async function createWrappedRowAnnotation(text, x, y, columnDirection, rowWidth,
 }
 
 // Функция для многоуровневой группировки вариантов
-function createMultiLevelGroups(variants, groupProperties, columnProperty) {
+function createMultiLevelGroups(variants, groupProperties, columnProperty, sortingOrder = null) {
   // Сначала группируем по основным свойствам
   const mainGroups = {};
   
@@ -758,12 +1103,12 @@ function createMultiLevelGroups(variants, groupProperties, columnProperty) {
         columns[columnValue].push(variant);
       });
       
-      // Сортируем варианты внутри каждой колонки
+      // Сортируем варианты внутри каждой колонки с учетом кастомного порядка
       const excludeProps = [...groupProperties, columnProperty];
       Object.keys(columns).forEach(columnKey => {
         columns[columnKey].sort((a, b) => {
-          const keyA = createSortingKey(a, excludeProps);
-          const keyB = createSortingKey(b, excludeProps);
+          const keyA = createSortingKey(a, excludeProps, sortingOrder);
+          const keyB = createSortingKey(b, excludeProps, sortingOrder);
           return keyA.localeCompare(keyB);
         });
       });
@@ -773,8 +1118,8 @@ function createMultiLevelGroups(variants, groupProperties, columnProperty) {
       // Если нет свойства для колонок, создаем одну колонку
       const excludeProps = groupProperties;
       groupVariants.sort((a, b) => {
-        const keyA = createSortingKey(a, excludeProps);
-        const keyB = createSortingKey(b, excludeProps);
+        const keyA = createSortingKey(a, excludeProps, sortingOrder);
+        const keyB = createSortingKey(b, excludeProps, sortingOrder);
         return keyA.localeCompare(keyB);
       });
       
@@ -797,7 +1142,10 @@ function alignComponentVariants(
   groupProperties = [], 
   columnProperty = null,
   showAnnotations = false,
-  annotationSpacing = 24
+  annotationSpacing = 24,
+  sortingOrder = null,
+  propertyNamesVisibility = null,
+  annotationTypes = null
 ) {
   if (!componentSet || componentSet.type !== 'COMPONENT_SET') {
     figma.notify('Выберите набор компонентов (Component Set)');
@@ -829,8 +1177,8 @@ function alignComponentVariants(
     
     if (groupProperties.length > 0 || columnProperty) {
       // Многоуровневая группировка
-      const groups = createMultiLevelGroups(variants, groupProperties, columnProperty);
-      setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing, groupProperties, columnProperty);
+      const groups = createMultiLevelGroups(variants, groupProperties, columnProperty, sortingOrder);
+      setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing, groupProperties, columnProperty, propertyNamesVisibility, annotationTypes, sortingOrder);
       
       const groupCount = Object.keys(groups).length;
       const totalColumns = Object.values(groups).reduce((max, group) => 
@@ -841,7 +1189,7 @@ function alignComponentVariants(
       figma.notify(`Создано ${groupCount} групп (${rows} строк по ${groupsPerRow} макс.) с ${totalColumns} максимум колонок в группе, направление: ${directionText}`);
     } else {
      // Простая сетка без группировки
-     setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection, annotationSpacing);
+     setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection, annotationSpacing, sortingOrder, propertyNamesVisibility, annotationTypes);
      figma.notify(`Варианты выровнены в простую сетку`);
    }
 
@@ -852,7 +1200,7 @@ function alignComponentVariants(
 }
 
 // Функция для создания многоуровневого Grid layout
-function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing = 24, groupProperties = [], columnProperty = null) {
+function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing = 24, groupProperties = [], columnProperty = null, propertyNamesVisibility = null, annotationTypes = null, sortingOrder = null) {
   const parentNode = componentSet.parent;
   const componentSetX = componentSet.x;
   const componentSetY = componentSet.y;
@@ -879,9 +1227,10 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
     });
   });
   
-  const groupKeys = Object.keys(groups).sort();
+  // ИСПОЛЬЗУЕМ КАСТОМНУЮ СОРТИРОВКУ ГРУПП согласно пользовательским настройкам
+  const groupKeys = sortGroupKeys(Object.keys(groups), groupProperties, sortingOrder);
   
-  // Рассчитываем размеры строк и максимальную ширину строки
+  // Рассчитываем размеры строк и максимальную ширину строки - ТЕПЕРЬ УЧИТЫВАЕМ МАКСИМАЛЬНУЮ ВЫСОТУ В КАЖДОЙ СТРОКЕ
   const rowHeights = [];
   const rowWidths = [];
   let maxRowWidth = 0;
@@ -894,23 +1243,33 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
     
     rowGroupKeys.forEach((groupKey, groupInRowIndex) => {
       const group = groups[groupKey];
-      const columnKeys = Object.keys(group).sort();
+      const columnKeys = sortColumnKeys(Object.keys(group), columnProperty, sortingOrder);
       
       let groupWidth, groupHeight;
       
       if (columnDirection === 'horizontal') {
         // Горизонтальное расположение колонок
-        // Для каждой колонки рассчитываем реальную высоту
+        // Для каждой колонки рассчитываем реальную высоту С УЧЕТОМ МАКСИМАЛЬНОЙ ВЫСОТЫ КОМПОНЕНТОВ В СТРОКЕ
         let maxColumnHeight = 0;
         columnKeys.forEach(key => {
           const columnVariants = group[key];
           let columnHeight = 0;
-          columnVariants.forEach((variant, index) => {
-            columnHeight += variant.height;
-            if (index < columnVariants.length - 1) {
+          
+          // Находим максимальную высоту компонента в этой колонке для каждой строки
+          const rowMaxHeights = [];
+          for (let i = 0; i < columnVariants.length; i++) {
+            if (!rowMaxHeights[i]) rowMaxHeights[i] = 0;
+            rowMaxHeights[i] = Math.max(rowMaxHeights[i], columnVariants[i].height);
+          }
+          
+          // Рассчитываем высоту колонки с учетом максимальных высот в каждой строке
+          rowMaxHeights.forEach((maxRowHeight, index) => {
+            columnHeight += maxRowHeight;
+            if (index < rowMaxHeights.length - 1) {
               columnHeight += spacing;
             }
           });
+          
           maxColumnHeight = Math.max(maxColumnHeight, columnHeight);
         });
         
@@ -931,17 +1290,20 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
         groupWidth = totalGroupWidth;
       } else {
         // Вертикальное расположение колонок
-        // Для каждой колонки рассчитываем реальную высоту
+        // Для каждой колонки рассчитываем реальную высоту С УЧЕТОМ МАКСИМАЛЬНОЙ ВЫСОТЫ КОМПОНЕНТОВ В СТРОКЕ
         let totalGroupHeight = 0;
         columnKeys.forEach((key, index) => {
           const columnVariants = group[key];
           let columnHeight = 0;
+          
+          // Находим максимальную высоту компонента в каждой позиции этой колонки
           columnVariants.forEach((variant, vIndex) => {
             columnHeight += variant.height;
             if (vIndex < columnVariants.length - 1) {
               columnHeight += spacing;
             }
           });
+          
           totalGroupHeight += columnHeight;
           if (index < columnKeys.length - 1) {
             totalGroupHeight += columnSpacing;
@@ -975,7 +1337,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
     maxRowWidth = Math.max(maxRowWidth, rowWidth);
   }
   
-  // Позиционируем компоненты
+  // Позиционируем компоненты - ТЕПЕРЬ С УЧЕТОМ МАКСИМАЛЬНОЙ ВЫСОТЫ В КАЖДОЙ СТРОКЕ
   let currentRowY = padding;
   const annotationOffset = 15; // Отступ для аннотаций
   
@@ -986,9 +1348,31 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
     const rowGroupKeys = groupKeys.slice(rowIndex * groupsPerRow, (rowIndex + 1) * groupsPerRow);
     let currentGroupX = padding;
     
+    // СНАЧАЛА РАССЧИТЫВАЕМ МАКСИМАЛЬНЫЕ ВЫСОТЫ ДЛЯ КАЖДОЙ ПОЗИЦИИ СТРОКИ В КАЖДОЙ ГРУППЕ
+    const rowMaxHeights = new Map(); // ключ: позиция строки в группе, значение: максимальная высота
+    
+    if (columnDirection === 'horizontal') {
+      rowGroupKeys.forEach((groupKey) => {
+        const group = groups[groupKey];
+        const columnKeys = sortColumnKeys(Object.keys(group), columnProperty, sortingOrder);
+        
+        columnKeys.forEach(columnKey => {
+          const columnVariants = group[columnKey];
+          columnVariants.forEach((variant, itemIndex) => {
+            const key = `row-${itemIndex}`;
+            if (!rowMaxHeights.has(key)) {
+              rowMaxHeights.set(key, variant.height);
+            } else {
+              rowMaxHeights.set(key, Math.max(rowMaxHeights.get(key), variant.height));
+            }
+          });
+        });
+      });
+    }
+    
     rowGroupKeys.forEach((groupKey, groupInRowIndex) => {
       const group = groups[groupKey];
-      const columnKeys = Object.keys(group).sort();
+      const columnKeys = sortColumnKeys(Object.keys(group), columnProperty, sortingOrder);
       let groupWidth;
       
       if (columnDirection === 'horizontal') {
@@ -998,8 +1382,9 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           const columnVariants = group[columnKey];
           const columnX = currentColumnX;
           
-          // Создаем аннотацию для колонки сверху (Направление колонок внутри групп: По горизонтали) (если включены аннотации, есть название колонки и она еще не создана в этой позиции)
-          if (showAnnotations && columnKey !== 'default' && annotationsFolder && !createdAnnotations.has(`column-pos-${columnX}`)) {
+                  // Создаем аннотацию для колонки сверху (Направление колонок внутри групп: По горизонтали) (если включены аннотации, есть название колонки и она еще не создана в этой позиции)
+        if (showAnnotations && columnKey !== 'default' && annotationsFolder && !createdAnnotations.has(`column-pos-${columnX}`) && 
+            (!annotationTypes || annotationTypes.columns !== false)) {
             // Рассчитываем позицию уровня 2 с правильными отступами 24px
             const variantAnnotationHeight = 25; // примерная высота рамки (hug content адаптируется)
             const columnAnnotationHeight = 25;
@@ -1043,14 +1428,14 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             createdAnnotations.add(`column-pos-${columnX}`);
           }
           
-          // Позиционируем варианты внутри колонки
+          // Позиционируем варианты внутри колонки С УЧЕТОМ МАКСИМАЛЬНОЙ ВЫСОТЫ
           let currentVariantY = currentRowY;
           columnVariants.forEach((variant, itemIndex) => {
             variant.x = columnX;
             variant.y = currentVariantY;
             
             // Создаем аннотацию для строки (если включены аннотации)
-            if (showAnnotations && annotationsFolder) {
+            if (showAnnotations && annotationsFolder && (!annotationTypes || annotationTypes.rows !== false)) {
               const rowY = currentVariantY;
               const rowKey = `row-${rowY}`;
               
@@ -1064,8 +1449,16 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
                   const rowProps = Object.keys(variant.variantProperties)
                     .filter(prop => !excludeProps.includes(prop))
                     .sort()
-                    .map(prop => `${prop}:${variant.variantProperties[prop]}`)
-                    .join('|');
+                    .map(prop => {
+                      const value = variant.variantProperties[prop];
+                      // Проверяем настройки видимости названий свойств
+                      if (propertyNamesVisibility && propertyNamesVisibility[prop] === false) {
+                        return value; // Показываем только значение
+                      } else {
+                        return `${prop}:${value}`; // Показываем свойство и значение
+                      }
+                    })
+                    .join(' | ');
                   
                   rowName = rowProps || `Row ${itemIndex + 1}`;
                 }
@@ -1075,14 +1468,15 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
                   const rowAnnotationWidth = 116;
                   const rowAnnotationX = componentSetX - annotationSpacing - rowAnnotationWidth;
                   
-                  // Создаем обернутую аннотацию с высотой строки (варианта)
+                  // Создаем обернутую аннотацию с высотой строки (МАКСИМАЛЬНОЙ ВЫСОТОЙ В СТРОКЕ)
+                  const maxRowHeight = rowMaxHeights.get(`row-${itemIndex}`) || variant.height;
                   createWrappedRowAnnotation(
                     rowName,
                     rowAnnotationX,
                     rowY, // Позиционируем контейнер по верхнему краю варианта
                     columnDirection,
                     0, // ширина не важна для горизонтального направления
-                    variant.height // высота конкретного варианта
+                    maxRowHeight // ИСПОЛЬЗУЕМ МАКСИМАЛЬНУЮ ВЫСОТУ В СТРОКЕ
                   ).then(wrapper => {
                     annotationsFolder.addRowAnnotation(wrapper);
                   });
@@ -1092,8 +1486,9 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
               }
             }
             
-            // Обновляем позицию для следующего варианта
-            currentVariantY += variant.height + spacing;
+            // ИСПОЛЬЗУЕМ МАКСИМАЛЬНУЮ ВЫСОТУ В СТРОКЕ для расчета следующей позиции
+            const maxRowHeight = rowMaxHeights.get(`row-${itemIndex}`) || variant.height;
+            currentVariantY += maxRowHeight + spacing;
           });
           
           // Обновляем позицию для следующей колонки
@@ -1120,7 +1515,8 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
         groupWidth = totalGroupWidth;
         
         // Создаем аннотацию для группы сверху по центру (если включены аннотации, есть название группы и она еще не создана)
-        if (showAnnotations && groupKey !== 'default' && annotationsFolder && !createdAnnotations.has(`group-${groupKey}`)) {
+        if (showAnnotations && groupKey !== 'default' && annotationsFolder && !createdAnnotations.has(`group-${groupKey}`) && 
+            (!annotationTypes || annotationTypes.groups !== false)) {
           const groupCenterX = currentGroupX + groupWidth / 2;
           // Сохраняем значения в локальных переменных для использования в .then()
           const groupStartX = currentGroupX;
@@ -1171,7 +1567,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
         let totalGroupHeight = 0;
         columnKeys.forEach((columnKey, columnIndex) => {
           const columnVariants = group[columnKey];
-          // Рассчитываем реальную высоту колонки
+          // Рассчитываем реальную высоту колонки (БЕЗ ИЗМЕНЕНИЙ ДЛЯ ВЕРТИКАЛЬНОГО НАПРАВЛЕНИЯ)
           let columnHeight = 0;
           columnVariants.forEach((variant, vIndex) => {
             columnHeight += variant.height;
@@ -1188,7 +1584,8 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
         });
         
         // Создаем аннотацию для группы слева по центру (Направление колонок внутри групп: По вертикали) (если включены аннотации, есть название группы и она еще не создана)
-        if (showAnnotations && groupKey !== 'default' && annotationsFolder && !createdAnnotations.has(`group-${groupKey}`)) {
+        if (showAnnotations && groupKey !== 'default' && annotationsFolder && !createdAnnotations.has(`group-${groupKey}`) && 
+            (!annotationTypes || annotationTypes.groups !== false)) {
           const groupCenterY = groupStartY + totalGroupHeight / 2;
           // Сохраняем значения в локальных переменных для использования в .then()
           const currentGroupStartY = groupStartY;
@@ -1235,7 +1632,8 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
           const columnVariants = group[columnKey];
           
           // Создаем аннотацию для колонки слева (если включены аннотации, есть название колонки и она еще не создана в этой позиции)
-          if (showAnnotations && columnKey !== 'default' && annotationsFolder && !createdAnnotations.has(`column-pos-${currentColumnY}`)) {
+          if (showAnnotations && columnKey !== 'default' && annotationsFolder && !createdAnnotations.has(`column-pos-${currentColumnY}`) && 
+              (!annotationTypes || annotationTypes.columns !== false)) {
             // Рассчитываем позицию уровня 2 с правильными отступами 24px
             const variantAnnotationWidth = 116; // примерная ширина рамки (hug content адаптируется)
             const columnAnnotationWidth = 116;
@@ -1267,7 +1665,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             createdAnnotations.add(`column-pos-${currentColumnY}`);
           }
           
-          // Позиционируем варианты внутри колонки
+          // Позиционируем варианты внутри колонки (БЕЗ ИЗМЕНЕНИЙ ДЛЯ ВЕРТИКАЛЬНОГО НАПРАВЛЕНИЯ)
           let currentVariantY = currentColumnY;
           columnVariants.forEach((variant, itemIndex) => {
             // Выравниваем по левому краю группы
@@ -1275,7 +1673,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             variant.y = currentVariantY;
             
             // Создаем аннотацию для строки (если включены аннотации)
-            if (showAnnotations && annotationsFolder) {
+            if (showAnnotations && annotationsFolder && (!annotationTypes || annotationTypes.rows !== false)) {
               const rowX = currentGroupX;
               const rowKey = `row-${rowX}`;
               
@@ -1289,8 +1687,16 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
                   const rowProps = Object.keys(variant.variantProperties)
                     .filter(prop => !excludeProps.includes(prop))
                     .sort()
-                    .map(prop => `${prop}:${variant.variantProperties[prop]}`)
-                    .join('|');
+                    .map(prop => {
+                      const value = variant.variantProperties[prop];
+                      // Проверяем настройки видимости названий свойств  
+                      if (propertyNamesVisibility && propertyNamesVisibility[prop] === false) {
+                        return value; // Показываем только значение
+                      } else {
+                        return `${prop}:${value}`; // Показываем свойство и значение
+                      }
+                    })
+                    .join(' | ');
                   
                   rowName = rowProps || `Row ${itemIndex + 1}`;
                 }
@@ -1317,7 +1723,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
               }
             }
             
-            // Обновляем позицию для следующего варианта
+            // Обновляем позицию для следующего варианта (БЕЗ ИЗМЕНЕНИЙ ДЛЯ ВЕРТИКАЛЬНОГО НАПРАВЛЕНИЯ)
             currentVariantY += variant.height + spacing;
           });
           
@@ -1379,7 +1785,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
 }
 
 // Функция для создания простого Grid layout (резервная)
-function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection = 'horizontal', annotationSpacing = 24) {
+function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnnotations, columnDirection = 'horizontal', annotationSpacing = 24, sortingOrder = null, propertyNamesVisibility = null, annotationTypes = null) {
   const parentNode = componentSet.parent;
   const componentSetX = componentSet.x;
   const componentSetY = componentSet.y;
@@ -1390,7 +1796,16 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
     annotationsFolder = createAnnotationsFolder(componentSet);
   }
   
-  // Простая сетка в одну колонку
+  // Сортируем варианты с учетом кастомного порядка
+  if (sortingOrder) {
+    variants.sort((a, b) => {
+      const keyA = createSortingKey(a, [], sortingOrder);
+      const keyB = createSortingKey(b, [], sortingOrder);
+      return keyA.localeCompare(keyB);
+    });
+  }
+  
+  // Простая сетка в одну колонку - ТЕПЕРЬ С ВЫРАВНИВАНИЕМ ПО МАКСИМАЛЬНОЙ ВЫСОТЕ
   let maxWidth = 0;
   let maxHeight = 0;
   
@@ -1404,7 +1819,10 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
     variant.x = padding;
     variant.y = currentY;
     
-    // Обновляем позицию для следующего варианта
+    // ИСПОЛЬЗУЕМ МАКСИМАЛЬНУЮ ВЫСОТУ для единообразного расположения (опционально)
+    // Если хотите, чтобы все компоненты были расположены с одинаковым интервалом:
+    // currentY += maxHeight + spacing;
+    // Если хотите сохранить оригинальное поведение (каждый компонент по своей высоте):
     currentY += variant.height + spacing;
     
     // Создаем аннотацию для варианта в зависимости от направления (если включены аннотации)
@@ -1441,10 +1859,104 @@ figma.on('selectionchange', () => {
   updateSelectionInfo();
 });
 
+// Функция для получения всех значений свойств компонента
+function getVariantPropertyValues(componentSet) {
+  if (!componentSet || componentSet.type !== 'COMPONENT_SET') {
+    return {};
+  }
+
+  const variants = componentSet.children.filter(child => child.type === 'COMPONENT');
+  const propertyValues = {};
+  
+  variants.forEach(variant => {
+    if (variant.variantProperties) {
+      Object.keys(variant.variantProperties).forEach(prop => {
+        if (!propertyValues[prop]) {
+          propertyValues[prop] = new Set();
+        }
+        propertyValues[prop].add(variant.variantProperties[prop]);
+      });
+    }
+  });
+  
+  // Преобразуем Set в массив и сортируем для консистентности
+  const result = {};
+  Object.keys(propertyValues).forEach(prop => {
+    result[prop] = Array.from(propertyValues[prop]).sort();
+  });
+  
+  return result;
+}
+
+// Функция для сохранения настроек компонента
+function saveComponentSettings(componentSet, settings) {
+  if (!componentSet || componentSet.type !== 'COMPONENT_SET') {
+    return;
+  }
+  
+  try {
+    const settingsData = JSON.stringify(settings);
+    componentSet.setPluginData('component-organizer-settings', settingsData);
+    console.log('Settings saved for component:', componentSet.name);
+  } catch (error) {
+    console.error('Error saving settings:', error);
+  }
+}
+
+// Функция для загрузки настроек компонента
+function loadComponentSettings(componentSet) {
+  if (!componentSet || componentSet.type !== 'COMPONENT_SET') {
+    return null;
+  }
+  
+  try {
+    const settingsData = componentSet.getPluginData('component-organizer-settings');
+    if (settingsData) {
+      const settings = JSON.parse(settingsData);
+      console.log('Settings loaded for component:', componentSet.name);
+      return settings;
+    }
+  } catch (error) {
+    console.error('Error loading settings:', error);
+  }
+  
+  return null;
+}
+
 // Обработчик сообщений от UI
 figma.ui.onmessage = (msg) => {
   if (msg.type === 'get-properties') {
     updateSelectionInfo();
+  }
+  
+  if (msg.type === 'get-property-values') {
+    const componentSet = getComponentSetFromSelection();
+    
+    if (componentSet) {
+      const propertyValues = getVariantPropertyValues(componentSet);
+      figma.ui.postMessage({
+        type: 'property-values-updated',
+        propertyValues: propertyValues
+      });
+    } else {
+      figma.ui.postMessage({
+        type: 'property-values-updated',
+        propertyValues: {}
+      });
+    }
+  }
+  
+  if (msg.type === 'get-preset-for-platform') {
+    const componentName = msg.componentName;
+    const platform = msg.platform;
+    
+    if (componentName && platform) {
+      const preset = getComponentPreset(componentName, platform);
+      figma.ui.postMessage({
+        type: 'preset-for-platform-updated',
+        preset: preset
+      });
+    }
   }
   
   if (msg.type === 'apply-preset') {
@@ -1455,12 +1967,16 @@ figma.ui.onmessage = (msg) => {
       return;
     }
 
-    const preset = getComponentPreset(componentSet.name);
+    const platform = msg.platform || null;
+    const preset = getComponentPreset(componentSet.name, platform);
     
     if (!preset) {
       figma.notify('Нет предустановки для этого компонента');
       return;
     }
+
+    const platformText = platform ? ` (${platform})` : '';
+    figma.notify(`Применена предустановка${platformText}`);
 
     alignComponentVariants(
       componentSet, 
@@ -1473,7 +1989,10 @@ figma.ui.onmessage = (msg) => {
       preset.groupProperties, 
       preset.columnProperty,
       preset.showAnnotations,
-      preset.annotationSpacing
+      preset.annotationSpacing,
+      preset.sortingOrder,
+      preset.propertyNamesVisibility,
+      preset.annotationTypes
     );
   }
   
@@ -1495,8 +2014,14 @@ figma.ui.onmessage = (msg) => {
       groupProperties: msg.groupProperties || [],
       columnProperty: msg.columnProperty || null,
       showAnnotations: msg.showAnnotations || false,
-      annotationSpacing: msg.annotationSpacing || 24
+      annotationSpacing: msg.annotationSpacing || 24,
+      sortingOrder: msg.sortingOrder || null,
+      propertyNamesVisibility: msg.propertyNamesVisibility || null,
+      annotationTypes: msg.annotationTypes || null
     };
+
+    // Сохраняем настройки в pluginData компонента
+    saveComponentSettings(componentSet, settings);
 
     alignComponentVariants(
       componentSet, 
@@ -1509,7 +2034,10 @@ figma.ui.onmessage = (msg) => {
       settings.groupProperties, 
       settings.columnProperty,
       settings.showAnnotations,
-      settings.annotationSpacing
+      settings.annotationSpacing,
+      settings.sortingOrder,
+      settings.propertyNamesVisibility,
+      settings.annotationTypes
     );
   }
   
