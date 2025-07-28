@@ -717,7 +717,6 @@
             detailsText += `\nДругие компоненты группы: ${otherComponents.join(', ')}`;
           }
         }
-        infoDetails.textContent = detailsText;
         
         groupingSection.classList.remove('disabled');
         alignBtn.disabled = false;
@@ -742,12 +741,24 @@
           platformSelector.style.display = 'none';
         }
         
+        // Загружаем настройки с приоритетом: сохраненные настройки > предустановки
+        if (data.savedSettings) {
+          // Есть сохраненные настройки - используем их в первую очередь
+          loadSettingsToUI(data.savedSettings);
+          // Обновляем статус в описании
+          detailsText += ' • настройки сохранены';
+        } else if (data.preset) {
+          // Нет сохраненных настроек, но есть предустановка
+          loadSettingsToUI(data.preset);
+        }
+        
+        // Устанавливаем итоговый текст описания
+        infoDetails.textContent = detailsText;
+        
         // Показываем кнопку предустановки если есть предустановка
         if (data.preset) {
           presetBtn.style.display = 'block';
           presetBtn.disabled = false;
-          // Загружаем предустановку в UI
-          loadSettingsToUI(data.preset);
         } else {
           presetBtn.style.display = 'none';
         }
@@ -1121,8 +1132,16 @@
         updateSelectionInfo(msg.data);
         
         // Если кастомная сортировка включена, обновляем значения свойств для нового компонента
+        // НО только если нет сохраненных настроек сортировки (чтобы избежать затирания)
         if (document.getElementById('use-custom-sorting-checkbox').checked && msg.data.hasValidSelection) {
-          parent.postMessage({ pluginMessage: { type: 'get-property-values' } }, '*');
+          // Проверяем, есть ли сохраненные настройки сортировки
+          const hasSavedSortingOrder = msg.data.savedSettings && msg.data.savedSettings.sortingOrder && 
+                                      Object.keys(msg.data.savedSettings.sortingOrder).length > 0;
+          
+          if (!hasSavedSortingOrder) {
+            // Запрашиваем значения свойств только если нет сохраненной сортировки
+            parent.postMessage({ pluginMessage: { type: 'get-property-values' } }, '*');
+          }
         }
       }
       if (msg && msg.type === 'preset-for-platform-updated') {
@@ -1131,8 +1150,14 @@
         }
       }
       if (msg && msg.type === 'property-values-updated') {
-        // Создаем базовый порядок сортировки из реальных значений свойств
-        if (msg.propertyValues && Object.keys(msg.propertyValues).length > 0) {
+        // Проверяем, есть ли отложенные настройки сортировки (из сохраненных настроек)
+        if (window.pendingSortingOrder && Object.keys(window.pendingSortingOrder).length > 0) {
+          // Используем сохраненные настройки сортировки
+          updateSortingOrderUI(window.pendingSortingOrder);
+          // Очищаем отложенные настройки после применения
+          window.pendingSortingOrder = null;
+        } else if (msg.propertyValues && Object.keys(msg.propertyValues).length > 0) {
+          // Создаем базовый порядок сортировки из реальных значений свойств только если нет сохраненных
           const baseSortingOrder = {};
           Object.keys(msg.propertyValues).forEach(property => {
             baseSortingOrder[property] = {};

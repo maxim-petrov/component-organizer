@@ -524,6 +524,7 @@ function updateSelectionInfo() {
     const preset = getComponentPreset(componentSet.name);
     const group = getComponentGroup(componentSet.name);
     const platforms = getComponentPlatforms(componentSet.name);
+    const savedSettings = loadComponentSettings(componentSet);
     
     figma.ui.postMessage({ 
       type: 'selection-updated', 
@@ -534,7 +535,8 @@ function updateSelectionInfo() {
         hasValidSelection: true,
         preset: preset,
         group: group,
-        platforms: platforms
+        platforms: platforms,
+        savedSettings: savedSettings
       }
     });
   } else {
@@ -1886,6 +1888,41 @@ function getVariantPropertyValues(componentSet) {
   return result;
 }
 
+// Функция для сохранения настроек компонента
+function saveComponentSettings(componentSet, settings) {
+  if (!componentSet || componentSet.type !== 'COMPONENT_SET') {
+    return;
+  }
+  
+  try {
+    const settingsData = JSON.stringify(settings);
+    componentSet.setPluginData('component-organizer-settings', settingsData);
+    console.log('Settings saved for component:', componentSet.name);
+  } catch (error) {
+    console.error('Error saving settings:', error);
+  }
+}
+
+// Функция для загрузки настроек компонента
+function loadComponentSettings(componentSet) {
+  if (!componentSet || componentSet.type !== 'COMPONENT_SET') {
+    return null;
+  }
+  
+  try {
+    const settingsData = componentSet.getPluginData('component-organizer-settings');
+    if (settingsData) {
+      const settings = JSON.parse(settingsData);
+      console.log('Settings loaded for component:', componentSet.name);
+      return settings;
+    }
+  } catch (error) {
+    console.error('Error loading settings:', error);
+  }
+  
+  return null;
+}
+
 // Обработчик сообщений от UI
 figma.ui.onmessage = (msg) => {
   if (msg.type === 'get-properties') {
@@ -1982,6 +2019,9 @@ figma.ui.onmessage = (msg) => {
       propertyNamesVisibility: msg.propertyNamesVisibility || null,
       annotationTypes: msg.annotationTypes || null
     };
+
+    // Сохраняем настройки в pluginData компонента
+    saveComponentSettings(componentSet, settings);
 
     alignComponentVariants(
       componentSet, 
