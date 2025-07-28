@@ -844,7 +844,7 @@
       container.innerHTML = '';
       
       if (!sortingOrder || Object.keys(sortingOrder).length === 0) {
-        container.innerHTML = '<div class="group-info">Выберите компонент с предустановкой для настройки сортировки</div>';
+        container.innerHTML = '<div class="group-info">Включите настройку порядка сортировки для настройки</div>';
         return;
       }
       
@@ -1099,13 +1099,13 @@
       const sortingSection = document.getElementById('sorting-order-section');
       if (e.target.checked) {
         sortingSection.style.display = 'block';
-        // Если есть доступные свойства, создаем базовый порядок сортировки
-        if (availableProperties.length > 0) {
-          const baseSortingOrder = {};
-          availableProperties.forEach(prop => {
-            baseSortingOrder[prop] = {};
-          });
-          updateSortingOrderUI(baseSortingOrder);
+        // Запрашиваем реальные значения свойств компонента
+        if (hasValidSelection) {
+          parent.postMessage({ pluginMessage: { type: 'get-property-values' } }, '*');
+        } else {
+          // Если нет выбранного компонента, показываем сообщение
+          const container = document.getElementById('sorting-properties-list');
+          container.innerHTML = '<div class="group-info">Выберите компонент для настройки сортировки</div>';
         }
       } else {
         sortingSection.style.display = 'none';
@@ -1119,10 +1119,33 @@
         // Сохраняем текущий компонент для обновления предустановок при смене платформы
         window.currentComponentName = msg.data.componentSetName;
         updateSelectionInfo(msg.data);
+        
+        // Если кастомная сортировка включена, обновляем значения свойств для нового компонента
+        if (document.getElementById('use-custom-sorting-checkbox').checked && msg.data.hasValidSelection) {
+          parent.postMessage({ pluginMessage: { type: 'get-property-values' } }, '*');
+        }
       }
       if (msg && msg.type === 'preset-for-platform-updated') {
         if (msg.preset) {
           loadSettingsToUI(msg.preset);
+        }
+      }
+      if (msg && msg.type === 'property-values-updated') {
+        // Создаем базовый порядок сортировки из реальных значений свойств
+        if (msg.propertyValues && Object.keys(msg.propertyValues).length > 0) {
+          const baseSortingOrder = {};
+          Object.keys(msg.propertyValues).forEach(property => {
+            baseSortingOrder[property] = {};
+            // Создаем базовый порядок (1, 2, 3...) для каждого значения
+            msg.propertyValues[property].forEach((value, index) => {
+              baseSortingOrder[property][value] = index + 1;
+            });
+          });
+          updateSortingOrderUI(baseSortingOrder);
+        } else {
+          // Если свойств нет, показываем сообщение
+          const container = document.getElementById('sorting-properties-list');
+          container.innerHTML = '<div class="group-info">У выбранного компонента нет свойств для сортировки</div>';
         }
       }
     });

@@ -1771,10 +1771,56 @@ figma.on('selectionchange', () => {
   updateSelectionInfo();
 });
 
+// Функция для получения всех значений свойств компонента
+function getVariantPropertyValues(componentSet) {
+  if (!componentSet || componentSet.type !== 'COMPONENT_SET') {
+    return {};
+  }
+
+  const variants = componentSet.children.filter(child => child.type === 'COMPONENT');
+  const propertyValues = {};
+  
+  variants.forEach(variant => {
+    if (variant.variantProperties) {
+      Object.keys(variant.variantProperties).forEach(prop => {
+        if (!propertyValues[prop]) {
+          propertyValues[prop] = new Set();
+        }
+        propertyValues[prop].add(variant.variantProperties[prop]);
+      });
+    }
+  });
+  
+  // Преобразуем Set в массив и сортируем для консистентности
+  const result = {};
+  Object.keys(propertyValues).forEach(prop => {
+    result[prop] = Array.from(propertyValues[prop]).sort();
+  });
+  
+  return result;
+}
+
 // Обработчик сообщений от UI
 figma.ui.onmessage = (msg) => {
   if (msg.type === 'get-properties') {
     updateSelectionInfo();
+  }
+  
+  if (msg.type === 'get-property-values') {
+    const componentSet = getComponentSetFromSelection();
+    
+    if (componentSet) {
+      const propertyValues = getVariantPropertyValues(componentSet);
+      figma.ui.postMessage({
+        type: 'property-values-updated',
+        propertyValues: propertyValues
+      });
+    } else {
+      figma.ui.postMessage({
+        type: 'property-values-updated',
+        propertyValues: {}
+      });
+    }
   }
   
   if (msg.type === 'get-preset-for-platform') {
