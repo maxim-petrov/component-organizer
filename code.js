@@ -1142,7 +1142,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
   
   const groupKeys = Object.keys(groups).sort();
   
-  // Рассчитываем размеры строк и максимальную ширину строки
+  // Рассчитываем размеры строк и максимальную ширину строки - ТЕПЕРЬ УЧИТЫВАЕМ МАКСИМАЛЬНУЮ ВЫСОТУ В КАЖДОЙ СТРОКЕ
   const rowHeights = [];
   const rowWidths = [];
   let maxRowWidth = 0;
@@ -1161,17 +1161,27 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
       
       if (columnDirection === 'horizontal') {
         // Горизонтальное расположение колонок
-        // Для каждой колонки рассчитываем реальную высоту
+        // Для каждой колонки рассчитываем реальную высоту С УЧЕТОМ МАКСИМАЛЬНОЙ ВЫСОТЫ КОМПОНЕНТОВ В СТРОКЕ
         let maxColumnHeight = 0;
         columnKeys.forEach(key => {
           const columnVariants = group[key];
           let columnHeight = 0;
-          columnVariants.forEach((variant, index) => {
-            columnHeight += variant.height;
-            if (index < columnVariants.length - 1) {
+          
+          // Находим максимальную высоту компонента в этой колонке для каждой строки
+          const rowMaxHeights = [];
+          for (let i = 0; i < columnVariants.length; i++) {
+            if (!rowMaxHeights[i]) rowMaxHeights[i] = 0;
+            rowMaxHeights[i] = Math.max(rowMaxHeights[i], columnVariants[i].height);
+          }
+          
+          // Рассчитываем высоту колонки с учетом максимальных высот в каждой строке
+          rowMaxHeights.forEach((maxRowHeight, index) => {
+            columnHeight += maxRowHeight;
+            if (index < rowMaxHeights.length - 1) {
               columnHeight += spacing;
             }
           });
+          
           maxColumnHeight = Math.max(maxColumnHeight, columnHeight);
         });
         
@@ -1192,17 +1202,20 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
         groupWidth = totalGroupWidth;
       } else {
         // Вертикальное расположение колонок
-        // Для каждой колонки рассчитываем реальную высоту
+        // Для каждой колонки рассчитываем реальную высоту С УЧЕТОМ МАКСИМАЛЬНОЙ ВЫСОТЫ КОМПОНЕНТОВ В СТРОКЕ
         let totalGroupHeight = 0;
         columnKeys.forEach((key, index) => {
           const columnVariants = group[key];
           let columnHeight = 0;
+          
+          // Находим максимальную высоту компонента в каждой позиции этой колонки
           columnVariants.forEach((variant, vIndex) => {
             columnHeight += variant.height;
             if (vIndex < columnVariants.length - 1) {
               columnHeight += spacing;
             }
           });
+          
           totalGroupHeight += columnHeight;
           if (index < columnKeys.length - 1) {
             totalGroupHeight += columnSpacing;
@@ -1236,7 +1249,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
     maxRowWidth = Math.max(maxRowWidth, rowWidth);
   }
   
-  // Позиционируем компоненты
+  // Позиционируем компоненты - ТЕПЕРЬ С УЧЕТОМ МАКСИМАЛЬНОЙ ВЫСОТЫ В КАЖДОЙ СТРОКЕ
   let currentRowY = padding;
   const annotationOffset = 15; // Отступ для аннотаций
   
@@ -1246,6 +1259,28 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
   for (let rowIndex = 0; rowIndex < Math.ceil(groupKeys.length / groupsPerRow); rowIndex++) {
     const rowGroupKeys = groupKeys.slice(rowIndex * groupsPerRow, (rowIndex + 1) * groupsPerRow);
     let currentGroupX = padding;
+    
+    // СНАЧАЛА РАССЧИТЫВАЕМ МАКСИМАЛЬНЫЕ ВЫСОТЫ ДЛЯ КАЖДОЙ ПОЗИЦИИ СТРОКИ В КАЖДОЙ ГРУППЕ
+    const rowMaxHeights = new Map(); // ключ: позиция строки в группе, значение: максимальная высота
+    
+    if (columnDirection === 'horizontal') {
+      rowGroupKeys.forEach((groupKey) => {
+        const group = groups[groupKey];
+        const columnKeys = Object.keys(group).sort();
+        
+        columnKeys.forEach(columnKey => {
+          const columnVariants = group[columnKey];
+          columnVariants.forEach((variant, itemIndex) => {
+            const key = `row-${itemIndex}`;
+            if (!rowMaxHeights.has(key)) {
+              rowMaxHeights.set(key, variant.height);
+            } else {
+              rowMaxHeights.set(key, Math.max(rowMaxHeights.get(key), variant.height));
+            }
+          });
+        });
+      });
+    }
     
     rowGroupKeys.forEach((groupKey, groupInRowIndex) => {
       const group = groups[groupKey];
@@ -1305,7 +1340,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             createdAnnotations.add(`column-pos-${columnX}`);
           }
           
-          // Позиционируем варианты внутри колонки
+          // Позиционируем варианты внутри колонки С УЧЕТОМ МАКСИМАЛЬНОЙ ВЫСОТЫ
           let currentVariantY = currentRowY;
           columnVariants.forEach((variant, itemIndex) => {
             variant.x = columnX;
@@ -1345,14 +1380,15 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
                   const rowAnnotationWidth = 116;
                   const rowAnnotationX = componentSetX - annotationSpacing - rowAnnotationWidth;
                   
-                  // Создаем обернутую аннотацию с высотой строки (варианта)
+                  // Создаем обернутую аннотацию с высотой строки (МАКСИМАЛЬНОЙ ВЫСОТОЙ В СТРОКЕ)
+                  const maxRowHeight = rowMaxHeights.get(`row-${itemIndex}`) || variant.height;
                   createWrappedRowAnnotation(
                     rowName,
                     rowAnnotationX,
                     rowY, // Позиционируем контейнер по верхнему краю варианта
                     columnDirection,
                     0, // ширина не важна для горизонтального направления
-                    variant.height // высота конкретного варианта
+                    maxRowHeight // ИСПОЛЬЗУЕМ МАКСИМАЛЬНУЮ ВЫСОТУ В СТРОКЕ
                   ).then(wrapper => {
                     annotationsFolder.addRowAnnotation(wrapper);
                   });
@@ -1362,8 +1398,9 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
               }
             }
             
-            // Обновляем позицию для следующего варианта
-            currentVariantY += variant.height + spacing;
+            // ИСПОЛЬЗУЕМ МАКСИМАЛЬНУЮ ВЫСОТУ В СТРОКЕ для расчета следующей позиции
+            const maxRowHeight = rowMaxHeights.get(`row-${itemIndex}`) || variant.height;
+            currentVariantY += maxRowHeight + spacing;
           });
           
           // Обновляем позицию для следующей колонки
@@ -1442,7 +1479,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
         let totalGroupHeight = 0;
         columnKeys.forEach((columnKey, columnIndex) => {
           const columnVariants = group[columnKey];
-          // Рассчитываем реальную высоту колонки
+          // Рассчитываем реальную высоту колонки (БЕЗ ИЗМЕНЕНИЙ ДЛЯ ВЕРТИКАЛЬНОГО НАПРАВЛЕНИЯ)
           let columnHeight = 0;
           columnVariants.forEach((variant, vIndex) => {
             columnHeight += variant.height;
@@ -1540,7 +1577,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
             createdAnnotations.add(`column-pos-${currentColumnY}`);
           }
           
-          // Позиционируем варианты внутри колонки
+          // Позиционируем варианты внутри колонки (БЕЗ ИЗМЕНЕНИЙ ДЛЯ ВЕРТИКАЛЬНОГО НАПРАВЛЕНИЯ)
           let currentVariantY = currentColumnY;
           columnVariants.forEach((variant, itemIndex) => {
             // Выравниваем по левому краю группы
@@ -1598,7 +1635,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
               }
             }
             
-            // Обновляем позицию для следующего варианта
+            // Обновляем позицию для следующего варианта (БЕЗ ИЗМЕНЕНИЙ ДЛЯ ВЕРТИКАЛЬНОГО НАПРАВЛЕНИЯ)
             currentVariantY += variant.height + spacing;
           });
           
@@ -1680,7 +1717,7 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
     });
   }
   
-  // Простая сетка в одну колонку
+  // Простая сетка в одну колонку - ТЕПЕРЬ С ВЫРАВНИВАНИЕМ ПО МАКСИМАЛЬНОЙ ВЫСОТЕ
   let maxWidth = 0;
   let maxHeight = 0;
   
@@ -1694,7 +1731,10 @@ function setupSimpleGridLayout(componentSet, variants, padding, spacing, showAnn
     variant.x = padding;
     variant.y = currentY;
     
-    // Обновляем позицию для следующего варианта
+    // ИСПОЛЬЗУЕМ МАКСИМАЛЬНУЮ ВЫСОТУ для единообразного расположения (опционально)
+    // Если хотите, чтобы все компоненты были расположены с одинаковым интервалом:
+    // currentY += maxHeight + spacing;
+    // Если хотите сохранить оригинальное поведение (каждый компонент по своей высоте):
     currentY += variant.height + spacing;
     
     // Создаем аннотацию для варианта в зависимости от направления (если включены аннотации)
