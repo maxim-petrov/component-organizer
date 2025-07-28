@@ -601,6 +601,91 @@ function createSortingKey(variant, excludeProperties, sortingOrder = null) {
     .join('|');
 }
 
+// Функция для сортировки групп согласно пользовательским настройкам
+function sortGroupKeys(groupKeys, groupProperties, sortingOrder = null) {
+  if (!sortingOrder || groupProperties.length === 0) {
+    // Если нет кастомного порядка, используем алфавитную сортировку
+    return groupKeys.sort();
+  }
+  
+  return groupKeys.sort((keyA, keyB) => {
+    // Разбираем ключи групп на свойства и значения
+    // Пример ключа: "Size:Large|State:Default" или "Size:Large"
+    const propsA = {};
+    const propsB = {};
+    
+    // Парсим ключ A
+    if (keyA !== 'default') {
+      keyA.split('|').forEach(part => {
+        const [prop, value] = part.split(':');
+        if (prop && value) {
+          propsA[prop] = value;
+        }
+      });
+    }
+    
+    // Парсим ключ B
+    if (keyB !== 'default') {
+      keyB.split('|').forEach(part => {
+        const [prop, value] = part.split(':');
+        if (prop && value) {
+          propsB[prop] = value;
+        }
+      });
+    }
+    
+    // Сравниваем по каждому свойству группировки в порядке приоритета
+    for (const prop of groupProperties) {
+      const valueA = propsA[prop] || '';
+      const valueB = propsB[prop] || '';
+      
+      // Получаем порядок для этого свойства из пользовательских настроек
+      const propOrder = sortingOrder[prop];
+      
+      if (propOrder) {
+        const orderA = propOrder[valueA] !== undefined ? propOrder[valueA] : 999;
+        const orderB = propOrder[valueB] !== undefined ? propOrder[valueB] : 999;
+        
+        if (orderA !== orderB) {
+          return orderA - orderB;
+        }
+      } else {
+        // Если для свойства нет кастомного порядка, используем алфавитную сортировку
+        const comparison = valueA.localeCompare(valueB);
+        if (comparison !== 0) {
+          return comparison;
+        }
+      }
+    }
+    
+    // Если все свойства равны, используем алфавитную сортировку ключей
+    return keyA.localeCompare(keyB);
+  });
+}
+
+// Функция для сортировки колонок согласно пользовательским настройкам
+function sortColumnKeys(columnKeys, columnProperty, sortingOrder = null) {
+  if (!sortingOrder || !columnProperty || !sortingOrder[columnProperty]) {
+    // Если нет кастомного порядка для свойства колонок, используем алфавитную сортировку
+    return columnKeys.sort();
+  }
+  
+  const propOrder = sortingOrder[columnProperty];
+  
+  return columnKeys.sort((keyA, keyB) => {
+    // Получаем порядок для каждого значения
+    const orderA = propOrder[keyA] !== undefined ? propOrder[keyA] : 999;
+    const orderB = propOrder[keyB] !== undefined ? propOrder[keyB] : 999;
+    
+    if (orderA !== orderB) {
+      return orderA - orderB;
+    }
+    
+    // Если порядок одинаковый, используем алфавитную сортировку
+    return keyA.localeCompare(keyB);
+  });
+}
+
 // Функция для создания папки аннотаций
 function createAnnotationsFolder(componentSet) {
   const parentNode = componentSet.parent;
@@ -1091,7 +1176,7 @@ function alignComponentVariants(
     if (groupProperties.length > 0 || columnProperty) {
       // Многоуровневая группировка
       const groups = createMultiLevelGroups(variants, groupProperties, columnProperty, sortingOrder);
-      setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing, groupProperties, columnProperty, propertyNamesVisibility, annotationTypes);
+      setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing, groupProperties, columnProperty, propertyNamesVisibility, annotationTypes, sortingOrder);
       
       const groupCount = Object.keys(groups).length;
       const totalColumns = Object.values(groups).reduce((max, group) => 
@@ -1113,7 +1198,7 @@ function alignComponentVariants(
 }
 
 // Функция для создания многоуровневого Grid layout
-function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing = 24, groupProperties = [], columnProperty = null, propertyNamesVisibility = null, annotationTypes = null) {
+function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, columnSpacing, groupSpacing, groupsPerRow, columnDirection, showAnnotations, annotationSpacing = 24, groupProperties = [], columnProperty = null, propertyNamesVisibility = null, annotationTypes = null, sortingOrder = null) {
   const parentNode = componentSet.parent;
   const componentSetX = componentSet.x;
   const componentSetY = componentSet.y;
@@ -1140,7 +1225,8 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
     });
   });
   
-  const groupKeys = Object.keys(groups).sort();
+  // ИСПОЛЬЗУЕМ КАСТОМНУЮ СОРТИРОВКУ ГРУПП согласно пользовательским настройкам
+  const groupKeys = sortGroupKeys(Object.keys(groups), groupProperties, sortingOrder);
   
   // Рассчитываем размеры строк и максимальную ширину строки - ТЕПЕРЬ УЧИТЫВАЕМ МАКСИМАЛЬНУЮ ВЫСОТУ В КАЖДОЙ СТРОКЕ
   const rowHeights = [];
@@ -1155,7 +1241,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
     
     rowGroupKeys.forEach((groupKey, groupInRowIndex) => {
       const group = groups[groupKey];
-      const columnKeys = Object.keys(group).sort();
+      const columnKeys = sortColumnKeys(Object.keys(group), columnProperty, sortingOrder);
       
       let groupWidth, groupHeight;
       
@@ -1266,7 +1352,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
     if (columnDirection === 'horizontal') {
       rowGroupKeys.forEach((groupKey) => {
         const group = groups[groupKey];
-        const columnKeys = Object.keys(group).sort();
+        const columnKeys = sortColumnKeys(Object.keys(group), columnProperty, sortingOrder);
         
         columnKeys.forEach(columnKey => {
           const columnVariants = group[columnKey];
@@ -1284,7 +1370,7 @@ function setupMultiLevelGridLayout(componentSet, groups, padding, spacing, colum
     
     rowGroupKeys.forEach((groupKey, groupInRowIndex) => {
       const group = groups[groupKey];
-      const columnKeys = Object.keys(group).sort();
+      const columnKeys = sortColumnKeys(Object.keys(group), columnProperty, sortingOrder);
       let groupWidth;
       
       if (columnDirection === 'horizontal') {
