@@ -623,7 +623,10 @@
         </div>
       </div>
       <button class="button button-preset" id="preset-btn" disabled style="display: none;">Применить предустановку</button>
-      <button class="button button-secondary" id="copy-preset-btn" disabled>Копировать пресет</button>
+      <div class="button-row">
+        <button class="button button-secondary" id="copy-preset-btn" disabled>Копировать пресет</button>
+        <button class="button button-secondary" id="reset-btn" disabled>Сброс</button>
+      </div>
       <div class="button-row">
         <button class="button button-primary" id="align-btn" disabled>Выровнять</button>
         <button class="button button-secondary" id="cancel-btn">Отмена</button>
@@ -634,6 +637,7 @@
   <script>
     let availableProperties = [];
     let hasValidSelection = false;
+    let initialSettings = null; // Для хранения исходных настроек компонента
     
     // Предустановленные значения для ComboInput
     const PRESET_VALUES = ['96', '80', '64', '48', '40', '32', '28', '24', '20', '16', '12', '8', '4', '2', '0'];
@@ -814,6 +818,14 @@
       }
     });
     
+    // Функция для сброса настроек к исходным значениям
+    function resetToInitialSettings() {
+      if (initialSettings) {
+        loadSettingsToUI(initialSettings);
+        console.log('Настройки сброшены к исходным значениям');
+      }
+    }
+    
     // Функция для загрузки настроек в UI
     function loadSettingsToUI(settings) {
       if (!settings) return;
@@ -935,6 +947,7 @@
       const alignBtn = document.getElementById('align-btn');
       const presetBtn = document.getElementById('preset-btn');
       const copyPresetBtn = document.getElementById('copy-preset-btn');
+      const resetBtn = document.getElementById('reset-btn');
       const refreshBtn = document.getElementById('refresh-properties-btn');
       const groupPropertiesList = document.getElementById('group-properties-list');
       const columnPropertySelect = document.getElementById('column-property-select');
@@ -961,6 +974,7 @@
         groupingSection.classList.remove('disabled');
         alignBtn.disabled = false;
         copyPresetBtn.disabled = false;
+        resetBtn.disabled = false;
         refreshBtn.disabled = false;
         groupPropertiesList.classList.remove('disabled');
         columnPropertySelect.disabled = false;
@@ -982,16 +996,43 @@
           platformSelector.style.display = 'none';
         }
         
-        // Загружаем настройки с приоритетом: сохраненные настройки > предустановки
+        // Определяем исходные настройки в порядке приоритета: savedSettings > preset > defaults
+        let currentInitialSettings = null;
         if (data.savedSettings) {
-          // Есть сохраненные настройки - используем их в первую очередь
-          loadSettingsToUI(data.savedSettings);
-          // Обновляем статус в описании
+          // Есть сохраненные настройки - они являются исходными
+          currentInitialSettings = data.savedSettings;
           detailsText += ' • настройки сохранены';
         } else if (data.preset) {
-          // Нет сохраненных настроек, но есть предустановка
-          loadSettingsToUI(data.preset);
+          // Есть предустановка - она является исходной
+          currentInitialSettings = data.preset;
+        } else {
+          // Используем дефолтные значения как исходные
+          currentInitialSettings = {
+            padding: 40,
+            spacing: 20,
+            columnSpacing: 40,
+            groupSpacing: 80,
+            groupsPerRow: 3,
+            columnDirection: 'horizontal',
+            groupProperties: [],
+            columnProperty: null,
+            showAnnotations: true,
+            annotationSpacing: 24,
+            sortingOrder: null,
+            propertyNamesVisibility: null,
+            annotationTypes: {
+              rows: true,
+              columns: true,
+              groups: true
+            }
+          };
         }
+        
+        // Сохраняем исходные настройки для функции сброса
+        initialSettings = currentInitialSettings;
+        
+        // Загружаем настройки в UI
+        loadSettingsToUI(currentInitialSettings);
         
         // Устанавливаем итоговый текст описания
         infoDetails.textContent = detailsText;
@@ -1013,6 +1054,7 @@
         groupingSection.classList.add('disabled');
         alignBtn.disabled = true;
         copyPresetBtn.disabled = true;
+        resetBtn.disabled = true;
         presetBtn.style.display = 'none';
         document.getElementById('platform-selector').style.display = 'none';
         refreshBtn.disabled = true;
@@ -1020,6 +1062,9 @@
         columnPropertySelect.disabled = true;
         
         updatePropertiesControls([]);
+        
+        // Сбрасываем исходные настройки
+        initialSettings = null;
       }
     }
     
@@ -1391,6 +1436,12 @@
           }
         } 
       }, '*');
+    });
+    
+    document.getElementById('reset-btn').addEventListener('click', () => {
+      if (initialSettings) {
+        resetToInitialSettings();
+      }
     });
     
     document.getElementById('cancel-btn').addEventListener('click', () => {
