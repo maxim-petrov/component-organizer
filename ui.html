@@ -376,6 +376,92 @@
     .button-secondary:hover {
       background: #e0e0e0;
     }
+    
+    /* Стили для ComboInput компонента */
+    .combo-input {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    
+    .combo-input-field {
+      padding: 8px 32px 8px 12px;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      font-size: 12px;
+      background: #ffffff;
+      outline: none;
+      transition: border-color 0.2s;
+      flex: 1;
+      min-width: 0;
+    }
+    
+    .combo-input-field:focus {
+      border-color: #0d99ff;
+    }
+    
+    .combo-dropdown-btn {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 24px;
+      height: 24px;
+      border: none;
+      background: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      color: #666666;
+      transition: color 0.2s;
+      border-radius: 2px;
+    }
+    
+    .combo-dropdown-btn:hover {
+      background: #f0f0f0;
+      color: #333333;
+    }
+    
+    .combo-dropdown {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: #ffffff;
+      border: 1px solid #e0e0e0;
+      border-radius: 4px;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+      z-index: 1000;
+      max-height: 200px;
+      overflow-y: auto;
+      display: none;
+    }
+    
+    .combo-dropdown.open {
+      display: block;
+    }
+    
+    .combo-option {
+      padding: 8px 12px;
+      font-size: 12px;
+      cursor: pointer;
+      transition: background-color 0.2s;
+    }
+    
+    .combo-option:hover {
+      background: #f0f7ff;
+    }
+    
+    .combo-option:active {
+      background: #e0f0ff;
+    }
+    
+    .combo-option.selected {
+      background: #0d99ff;
+      color: white;
+    }
   </style>
 </head>
 <body>
@@ -395,54 +481,22 @@
     <div class="settings">
       <div class="setting-group">
         <label class="setting-label" for="padding-input">Паддинг (px):</label>
-        <input 
-          type="number" 
-          id="padding-input" 
-          class="setting-input" 
-          value="40" 
-          min="0" 
-          max="200"
-          placeholder="40"
-        >
+        <div id="padding-input-container"></div>
       </div>
       
       <div class="setting-group">
         <label class="setting-label" for="spacing-input">Отступ между вариантами (px):</label>
-        <input 
-          type="number" 
-          id="spacing-input" 
-          class="setting-input" 
-          value="20" 
-          min="0" 
-          max="200"
-          placeholder="20"
-        >
+        <div id="spacing-input-container"></div>
       </div>
       
       <div class="setting-group">
         <label class="setting-label" for="column-spacing-input">Отступ между колонками (px):</label>
-        <input 
-          type="number" 
-          id="column-spacing-input" 
-          class="setting-input" 
-          value="40" 
-          min="0" 
-          max="200"
-          placeholder="40"
-        >
+        <div id="column-spacing-input-container"></div>
       </div>
       
       <div class="setting-group">
         <label class="setting-label" for="group-spacing-input">Отступ между группами (px):</label>
-        <input 
-          type="number" 
-          id="group-spacing-input" 
-          class="setting-input" 
-          value="80" 
-          min="0" 
-          max="300"
-          placeholder="80"
-        >
+        <div id="group-spacing-input-container"></div>
       </div>
       
       <div class="setting-group">
@@ -468,15 +522,7 @@
       
       <div class="setting-group">
         <label class="setting-label" for="annotation-spacing-input">Отступ между уровнями аннотаций (px):</label>
-        <input 
-          type="number" 
-          id="annotation-spacing-input" 
-          class="setting-input" 
-          value="24" 
-          min="8" 
-          max="50"
-          placeholder="24"
-        >
+        <div id="annotation-spacing-input-container"></div>
         <div class="group-info">Расстояние между уровнями иерархии аннотаций</div>
       </div>
       
@@ -589,18 +635,201 @@
     let availableProperties = [];
     let hasValidSelection = false;
     
+    // Предустановленные значения для ComboInput
+    const PRESET_VALUES = ['96', '80', '64', '48', '40', '32', '28', '24', '20', '16', '12', '8', '4', '2', '0'];
+    
+    // Функция для создания ComboInput компонента
+    function createComboInput(inputId, defaultValue = '', placeholder = '') {
+      const container = document.createElement('div');
+      container.className = 'combo-input';
+      
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.id = inputId;
+      input.className = 'combo-input-field';
+      input.value = defaultValue;
+      input.placeholder = placeholder;
+      
+      const dropdownBtn = document.createElement('button');
+      dropdownBtn.type = 'button';
+      dropdownBtn.className = 'combo-dropdown-btn';
+      dropdownBtn.innerHTML = '▼';
+      
+      const dropdown = document.createElement('div');
+      dropdown.className = 'combo-dropdown';
+      
+      // Создаем опции для дропдауна
+      PRESET_VALUES.forEach(value => {
+        const option = document.createElement('div');
+        option.className = 'combo-option';
+        option.dataset.value = value;
+        option.textContent = value + 'px';
+        dropdown.appendChild(option);
+      });
+      
+      container.appendChild(input);
+      container.appendChild(dropdownBtn);
+      container.appendChild(dropdown);
+      
+      return container;
+    }
+    
+    // Функция для установки обработчиков событий для ComboInput
+    function setupComboInputEvents(container) {
+      const input = container.querySelector('.combo-input-field');
+      const dropdownBtn = container.querySelector('.combo-dropdown-btn');
+      const dropdown = container.querySelector('.combo-dropdown');
+      const options = container.querySelectorAll('.combo-option');
+      
+      // Открытие/закрытие дропдауна при клике на кнопку
+      dropdownBtn.addEventListener('click', (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        closeAllDropdowns();
+        toggleDropdown(dropdown);
+      });
+      
+      // Открытие дропдауна при фокусе на input
+      input.addEventListener('focus', () => {
+        closeAllDropdowns();
+        openDropdown(dropdown);
+      });
+      
+      // Выбор опции из дропдауна
+      options.forEach(option => {
+        option.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const value = option.dataset.value;
+          input.value = value;
+          closeDropdown(dropdown);
+          input.dispatchEvent(new Event('input', { bubbles: true }));
+        });
+      });
+      
+      // Валидация ввода - разрешаем только цифры
+      input.addEventListener('input', (e) => {
+        const value = e.target.value;
+        // Удаляем все кроме цифр
+        const numericValue = value.replace(/[^\d]/g, '');
+        if (value !== numericValue) {
+          e.target.value = numericValue;
+        }
+        
+        // Обновляем выделение в дропдауне
+        updateDropdownSelection(container, numericValue);
+      });
+      
+      // Разрешаем навигацию стрелками в дропдауне
+      input.addEventListener('keydown', (e) => {
+        if (dropdown.classList.contains('open')) {
+          if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+            e.preventDefault();
+            navigateDropdown(dropdown, e.key === 'ArrowDown' ? 1 : -1);
+          } else if (e.key === 'Enter') {
+            e.preventDefault();
+            const selectedOption = dropdown.querySelector('.combo-option.selected');
+            if (selectedOption) {
+              input.value = selectedOption.dataset.value;
+              closeDropdown(dropdown);
+              input.dispatchEvent(new Event('input', { bubbles: true }));
+            }
+          } else if (e.key === 'Escape') {
+            closeDropdown(dropdown);
+          }
+        }
+      });
+    }
+    
+    // Функция для открытия дропдауна
+    function openDropdown(dropdown) {
+      dropdown.classList.add('open');
+    }
+    
+    // Функция для закрытия дропдауна
+    function closeDropdown(dropdown) {
+      dropdown.classList.remove('open');
+      dropdown.querySelectorAll('.combo-option').forEach(opt => opt.classList.remove('selected'));
+    }
+    
+    // Функция для переключения состояния дропдауна
+    function toggleDropdown(dropdown) {
+      if (dropdown.classList.contains('open')) {
+        closeDropdown(dropdown);
+      } else {
+        openDropdown(dropdown);
+      }
+    }
+    
+    // Функция для закрытия всех дропдаунов
+    function closeAllDropdowns() {
+      document.querySelectorAll('.combo-dropdown').forEach(dropdown => {
+        closeDropdown(dropdown);
+      });
+    }
+    
+    // Функция для обновления выделения в дропдауне
+    function updateDropdownSelection(container, value) {
+      const options = container.querySelectorAll('.combo-option');
+      options.forEach(option => {
+        option.classList.toggle('selected', option.dataset.value === value);
+      });
+    }
+    
+    // Функция для навигации по дропдауну стрелками
+    function navigateDropdown(dropdown, direction) {
+      const options = Array.from(dropdown.querySelectorAll('.combo-option'));
+      const currentSelected = dropdown.querySelector('.combo-option.selected');
+      let newIndex = 0;
+      
+      if (currentSelected) {
+        const currentIndex = options.indexOf(currentSelected);
+        newIndex = currentIndex + direction;
+      } else if (direction > 0) {
+        newIndex = 0;
+      } else {
+        newIndex = options.length - 1;
+      }
+      
+      // Зацикливаем навигацию
+      if (newIndex < 0) newIndex = options.length - 1;
+      if (newIndex >= options.length) newIndex = 0;
+      
+      options.forEach(opt => opt.classList.remove('selected'));
+      options[newIndex].classList.add('selected');
+    }
+    
+    // Закрытие дропдаунов при клике вне их
+    document.addEventListener('click', (e) => {
+      if (!e.target.closest('.combo-input')) {
+        closeAllDropdowns();
+      }
+    });
+    
     // Функция для загрузки настроек в UI
     function loadSettingsToUI(settings) {
       if (!settings) return;
       
       // Загружаем основные настройки
-      document.getElementById('padding-input').value = settings.padding || 40;
-      document.getElementById('spacing-input').value = settings.spacing || 20;
-      document.getElementById('column-spacing-input').value = settings.columnSpacing || 40;
-      document.getElementById('group-spacing-input').value = settings.groupSpacing || 80;
-      document.getElementById('groups-per-row-input').value = settings.groupsPerRow || 3;
-      document.getElementById('show-annotations-checkbox').checked = settings.showAnnotations !== false;
-      document.getElementById('annotation-spacing-input').value = settings.annotationSpacing || 24;
+      const paddingInput = document.getElementById('padding-input');
+      if (paddingInput) paddingInput.value = settings.padding || 40;
+      
+      const spacingInput = document.getElementById('spacing-input');
+      if (spacingInput) spacingInput.value = settings.spacing || 20;
+      
+      const columnSpacingInput = document.getElementById('column-spacing-input');
+      if (columnSpacingInput) columnSpacingInput.value = settings.columnSpacing || 40;
+      
+      const groupSpacingInput = document.getElementById('group-spacing-input');
+      if (groupSpacingInput) groupSpacingInput.value = settings.groupSpacing || 80;
+      
+      const groupsPerRowInput = document.getElementById('groups-per-row-input');
+      if (groupsPerRowInput) groupsPerRowInput.value = settings.groupsPerRow || 3;
+      
+      const showAnnotationsCheckbox = document.getElementById('show-annotations-checkbox');
+      if (showAnnotationsCheckbox) showAnnotationsCheckbox.checked = settings.showAnnotations !== false;
+      
+      const annotationSpacingInput = document.getElementById('annotation-spacing-input');
+      if (annotationSpacingInput) annotationSpacingInput.value = settings.annotationSpacing || 24;
       
       // Загружаем направление колонок
       const columnDirectionRadios = document.querySelectorAll('input[name="column-direction"]');
@@ -1057,16 +1286,22 @@
         return;
       }
       
-      const padding = parseInt(document.getElementById('padding-input').value) || 40;
-      const spacing = parseInt(document.getElementById('spacing-input').value) || 20;
-      const columnSpacing = parseInt(document.getElementById('column-spacing-input').value) || 40;
-      const groupSpacing = parseInt(document.getElementById('group-spacing-input').value) || 80;
+      const paddingInput = document.getElementById('padding-input');
+      const spacingInput = document.getElementById('spacing-input');
+      const columnSpacingInput = document.getElementById('column-spacing-input');
+      const groupSpacingInput = document.getElementById('group-spacing-input');
+      const annotationSpacingInput = document.getElementById('annotation-spacing-input');
+      
+      const padding = parseInt(paddingInput ? paddingInput.value : '40') || 40;
+      const spacing = parseInt(spacingInput ? spacingInput.value : '20') || 20;
+      const columnSpacing = parseInt(columnSpacingInput ? columnSpacingInput.value : '40') || 40;
+      const groupSpacing = parseInt(groupSpacingInput ? groupSpacingInput.value : '80') || 80;
       const groupsPerRow = parseInt(document.getElementById('groups-per-row-input').value) || 3;
       const columnDirection = document.querySelector('input[name="column-direction"]:checked').value;
       const groupProperties = getSelectedGroupProperties();
       const columnProperty = document.getElementById('column-property-select').value;
       const showAnnotations = document.getElementById('show-annotations-checkbox').checked;
-              const annotationSpacing = parseInt(document.getElementById('annotation-spacing-input').value) || 24;
+      const annotationSpacing = parseInt(annotationSpacingInput ? annotationSpacingInput.value : '24') || 24;
         const sortingOrder = getSortingOrderFromUI();
         const propertyNamesVisibility = getPropertyNamesVisibilityFromUI();
         const annotationTypes = getAnnotationTypesFromUI();
@@ -1106,16 +1341,22 @@
         return;
       }
       
-      const padding = parseInt(document.getElementById('padding-input').value) || 40;
-      const spacing = parseInt(document.getElementById('spacing-input').value) || 20;
-      const columnSpacing = parseInt(document.getElementById('column-spacing-input').value) || 40;
-      const groupSpacing = parseInt(document.getElementById('group-spacing-input').value) || 80;
+      const paddingInput = document.getElementById('padding-input');
+      const spacingInput = document.getElementById('spacing-input');
+      const columnSpacingInput = document.getElementById('column-spacing-input');
+      const groupSpacingInput = document.getElementById('group-spacing-input');
+      const annotationSpacingInput = document.getElementById('annotation-spacing-input');
+      
+      const padding = parseInt(paddingInput ? paddingInput.value : '40') || 40;
+      const spacing = parseInt(spacingInput ? spacingInput.value : '20') || 20;
+      const columnSpacing = parseInt(columnSpacingInput ? columnSpacingInput.value : '40') || 40;
+      const groupSpacing = parseInt(groupSpacingInput ? groupSpacingInput.value : '80') || 80;
       const groupsPerRow = parseInt(document.getElementById('groups-per-row-input').value) || 3;
       const columnDirection = document.querySelector('input[name="column-direction"]:checked').value;
       const groupProperties = getSelectedGroupProperties();
       const columnProperty = document.getElementById('column-property-select').value;
       const showAnnotations = document.getElementById('show-annotations-checkbox').checked;
-      const annotationSpacing = parseInt(document.getElementById('annotation-spacing-input').value) || 24;
+      const annotationSpacing = parseInt(annotationSpacingInput ? annotationSpacingInput.value : '24') || 24;
       const sortingOrder = getSortingOrderFromUI();
       const propertyNamesVisibility = getPropertyNamesVisibilityFromUI();
       const annotationTypes = getAnnotationTypesFromUI();
@@ -1257,24 +1498,61 @@
       }
     });
     
-    // Валидация ввода
+    // Инициализация ComboInput компонентов
+    document.addEventListener('DOMContentLoaded', () => {
+      // Создаем ComboInput для каждого поля
+      const comboInputs = [
+        { containerId: 'padding-input-container', inputId: 'padding-input', defaultValue: '40', placeholder: '40' },
+        { containerId: 'spacing-input-container', inputId: 'spacing-input', defaultValue: '20', placeholder: '20' },
+        { containerId: 'column-spacing-input-container', inputId: 'column-spacing-input', defaultValue: '40', placeholder: '40' },
+        { containerId: 'group-spacing-input-container', inputId: 'group-spacing-input', defaultValue: '80', placeholder: '80' },
+        { containerId: 'annotation-spacing-input-container', inputId: 'annotation-spacing-input', defaultValue: '24', placeholder: '24' }
+      ];
+      
+      comboInputs.forEach(config => {
+        const container = document.getElementById(config.containerId);
+        if (container) {
+          const comboInput = createComboInput(config.inputId, config.defaultValue, config.placeholder);
+          container.appendChild(comboInput);
+          setupComboInputEvents(comboInput);
+        }
+      });
+    });
+    
+    // Если DOM уже загружен, инициализируем сразу
+    if (document.readyState === 'loading') {
+      // DOM еще загружается
+    } else {
+      // DOM уже загружен
+      setTimeout(() => {
+        const comboInputs = [
+          { containerId: 'padding-input-container', inputId: 'padding-input', defaultValue: '40', placeholder: '40' },
+          { containerId: 'spacing-input-container', inputId: 'spacing-input', defaultValue: '20', placeholder: '20' },
+          { containerId: 'column-spacing-input-container', inputId: 'column-spacing-input', defaultValue: '40', placeholder: '40' },
+          { containerId: 'group-spacing-input-container', inputId: 'group-spacing-input', defaultValue: '80', placeholder: '80' },
+          { containerId: 'annotation-spacing-input-container', inputId: 'annotation-spacing-input', defaultValue: '24', placeholder: '24' }
+        ];
+        
+        comboInputs.forEach(config => {
+          const container = document.getElementById(config.containerId);
+          if (container && !container.hasChildNodes()) {
+            const comboInput = createComboInput(config.inputId, config.defaultValue, config.placeholder);
+            container.appendChild(comboInput);
+            setupComboInputEvents(comboInput);
+          }
+        });
+      }, 100);
+    }
+    
+    // Валидация ввода для оставшихся обычных input полей
     const inputs = document.querySelectorAll('.setting-input');
     inputs.forEach(input => {
       input.addEventListener('input', (e) => {
         const value = parseInt(e.target.value);
         
-        if (e.target.id === 'group-spacing-input') {
-          if (value < 0) e.target.value = 0;
-          if (value > 300) e.target.value = 300;
-        } else if (e.target.id === 'groups-per-row-input') {
+        if (e.target.id === 'groups-per-row-input') {
           if (value < 1) e.target.value = 1;
           if (value > 10) e.target.value = 10;
-        } else if (e.target.id === 'annotation-spacing-input') {
-          if (value < 8) e.target.value = 8;
-          if (value > 50) e.target.value = 50;
-        } else {
-          if (value < 0) e.target.value = 0;
-          if (value > 200) e.target.value = 200;
         }
       });
     });
