@@ -685,8 +685,17 @@
       dropdownBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
+        
+        // Проверяем, открыт ли текущий дропдаун
+        const isCurrentOpen = dropdown.classList.contains('open');
+        
+        // Закрываем все дропдауны
         closeAllDropdowns();
-        toggleDropdown(dropdown);
+        
+        // Если текущий дропдаун не был открыт, открываем его
+        if (!isCurrentOpen) {
+          openDropdown(dropdown);
+        }
       });
       
       // Открытие дропдауна при фокусе на input
