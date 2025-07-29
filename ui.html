@@ -577,6 +577,7 @@
         </div>
       </div>
       <button class="button button-preset" id="preset-btn" disabled style="display: none;">Применить предустановку</button>
+      <button class="button button-secondary" id="copy-preset-btn" disabled>Копировать пресет</button>
       <div class="button-row">
         <button class="button button-primary" id="align-btn" disabled>Выровнять</button>
         <button class="button button-secondary" id="cancel-btn">Отмена</button>
@@ -695,6 +696,7 @@
       const groupingSection = document.getElementById('grouping-section');
       const alignBtn = document.getElementById('align-btn');
       const presetBtn = document.getElementById('preset-btn');
+      const copyPresetBtn = document.getElementById('copy-preset-btn');
       const refreshBtn = document.getElementById('refresh-properties-btn');
       const groupPropertiesList = document.getElementById('group-properties-list');
       const columnPropertySelect = document.getElementById('column-property-select');
@@ -720,6 +722,7 @@
         
         groupingSection.classList.remove('disabled');
         alignBtn.disabled = false;
+        copyPresetBtn.disabled = false;
         refreshBtn.disabled = false;
         groupPropertiesList.classList.remove('disabled');
         columnPropertySelect.disabled = false;
@@ -771,6 +774,7 @@
         
         groupingSection.classList.add('disabled');
         alignBtn.disabled = true;
+        copyPresetBtn.disabled = true;
         presetBtn.style.display = 'none';
         document.getElementById('platform-selector').style.display = 'none';
         refreshBtn.disabled = true;
@@ -1087,6 +1091,58 @@
       }, '*');
     });
     
+    document.getElementById('copy-preset-btn').addEventListener('click', () => {
+      if (!hasValidSelection) {
+        return;
+      }
+      
+      if (!window.currentComponentName) {
+        parent.postMessage({
+          pluginMessage: {
+            type: 'show-notification',
+            message: 'Выберите компонент для копирования пресета'
+          }
+        }, '*');
+        return;
+      }
+      
+      const padding = parseInt(document.getElementById('padding-input').value) || 40;
+      const spacing = parseInt(document.getElementById('spacing-input').value) || 20;
+      const columnSpacing = parseInt(document.getElementById('column-spacing-input').value) || 40;
+      const groupSpacing = parseInt(document.getElementById('group-spacing-input').value) || 80;
+      const groupsPerRow = parseInt(document.getElementById('groups-per-row-input').value) || 3;
+      const columnDirection = document.querySelector('input[name="column-direction"]:checked').value;
+      const groupProperties = getSelectedGroupProperties();
+      const columnProperty = document.getElementById('column-property-select').value;
+      const showAnnotations = document.getElementById('show-annotations-checkbox').checked;
+      const annotationSpacing = parseInt(document.getElementById('annotation-spacing-input').value) || 24;
+      const sortingOrder = getSortingOrderFromUI();
+      const propertyNamesVisibility = getPropertyNamesVisibilityFromUI();
+      const annotationTypes = getAnnotationTypesFromUI();
+      
+      parent.postMessage({ 
+        pluginMessage: { 
+          type: 'copy-preset',
+          componentName: window.currentComponentName || 'Unknown Component',
+          settings: {
+            padding: padding,
+            spacing: spacing,
+            columnSpacing: columnSpacing,
+            groupSpacing: groupSpacing,
+            groupsPerRow: groupsPerRow,
+            columnDirection: columnDirection,
+            groupProperties: groupProperties,
+            columnProperty: columnProperty === 'none' ? null : columnProperty,
+            showAnnotations: showAnnotations,
+            annotationSpacing: annotationSpacing,
+            sortingOrder: sortingOrder,
+            propertyNamesVisibility: propertyNamesVisibility,
+            annotationTypes: annotationTypes
+          }
+        } 
+      }, '*');
+    });
+    
     document.getElementById('cancel-btn').addEventListener('click', () => {
       parent.postMessage({ pluginMessage: { type: 'cancel' } }, '*');
     });
@@ -1171,6 +1227,32 @@
           // Если свойств нет, показываем сообщение
           const container = document.getElementById('sorting-properties-list');
           container.innerHTML = '<div class="group-info">У выбранного компонента нет свойств для сортировки</div>';
+        }
+      }
+      if (msg && msg.type === 'preset-copied') {
+        // Копируем код пресета в буфер обмена
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(msg.presetCode).then(() => {
+            console.log('Пресет скопирован в буфер обмена для компонента:', msg.componentName);
+          }).catch(err => {
+            console.error('Ошибка при копировании в буфер обмена:', err);
+            // Fallback: показываем код в alert для ручного копирования
+            alert('Скопируйте этот код в presets.js:\n\n' + msg.presetCode);
+          });
+        } else {
+          // Fallback для старых браузеров
+          const textArea = document.createElement('textarea');
+          textArea.value = msg.presetCode;
+          document.body.appendChild(textArea);
+          textArea.select();
+          try {
+            document.execCommand('copy');
+            console.log('Пресет скопирован в буфер обмена (fallback) для компонента:', msg.componentName);
+          } catch (err) {
+            console.error('Ошибка при копировании (fallback):', err);
+            alert('Скопируйте этот код в presets.js:\n\n' + msg.presetCode);
+          }
+          document.body.removeChild(textArea);
         }
       }
     });

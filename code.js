@@ -479,6 +479,81 @@ function loadPresets() {
 // Инициализируем предустановки при загрузке плагина
 loadPresets();
 
+// Функция для форматирования настроек в пресет для presets.js
+function formatSettingsAsPreset(componentName, settings) {
+  const indent = '  ';
+  const indent2 = '    ';
+  const indent3 = '      ';
+  const indent4 = '        ';
+  const indent5 = '          ';
+  
+  let presetCode = `'${componentName}': {\n`;
+  
+  // Основные настройки
+  presetCode += `${indent2}padding: ${settings.padding || 40},\n`;
+  presetCode += `${indent2}spacing: ${settings.spacing || 20},\n`;
+  presetCode += `${indent2}columnSpacing: ${settings.columnSpacing || 40},\n`;
+  presetCode += `${indent2}groupSpacing: ${settings.groupSpacing || 80},\n`;
+  presetCode += `${indent2}groupsPerRow: ${settings.groupsPerRow || 3},\n`;
+  presetCode += `${indent2}columnDirection: '${settings.columnDirection || 'horizontal'}',\n`;
+  
+  // Свойства группировки
+  if (settings.groupProperties && settings.groupProperties.length > 0) {
+    presetCode += `${indent2}groupProperties: [${settings.groupProperties.map(prop => `'${prop}'`).join(', ')}],\n`;
+  } else {
+    presetCode += `${indent2}groupProperties: [],\n`;
+  }
+  
+  if (settings.columnProperty) {
+    presetCode += `${indent2}columnProperty: '${settings.columnProperty}',\n`;
+  } else {
+    presetCode += `${indent2}columnProperty: null,\n`;
+  }
+  
+  // Настройки аннотаций
+  presetCode += `${indent2}showAnnotations: ${settings.showAnnotations !== false ? 'true' : 'false'},\n`;
+  presetCode += `${indent2}annotationSpacing: ${settings.annotationSpacing || 24}`;
+  
+  // Кастомная сортировка (если есть)
+  if (settings.sortingOrder && Object.keys(settings.sortingOrder).length > 0) {
+    presetCode += `,\n${indent2}sortingOrder: {\n`;
+    Object.keys(settings.sortingOrder).forEach(property => {
+      presetCode += `${indent3}'${property}': {\n`;
+      Object.keys(settings.sortingOrder[property]).forEach(value => {
+        presetCode += `${indent4}'${value}': ${settings.sortingOrder[property][value]},\n`;
+      });
+      presetCode = presetCode.slice(0, -2) + '\n'; // убираем последнюю запятую
+      presetCode += `${indent3}},\n`;
+    });
+    presetCode = presetCode.slice(0, -2) + '\n'; // убираем последнюю запятую
+    presetCode += `${indent2}}`;
+  }
+  
+  // Настройки видимости названий свойств (если есть) 
+  if (settings.propertyNamesVisibility && Object.keys(settings.propertyNamesVisibility).length > 0) {
+    presetCode += `,\n${indent2}propertyNamesVisibility: {\n`;
+    Object.keys(settings.propertyNamesVisibility).forEach(property => {
+      const value = settings.propertyNamesVisibility[property];
+      presetCode += `${indent3}'${property}': ${value ? 'true' : 'false'},\n`;
+    });
+    presetCode = presetCode.slice(0, -2) + '\n'; // убираем последнюю запятую
+    presetCode += `${indent2}}`;
+  }
+  
+  // Настройки типов аннотаций (если есть)
+  if (settings.annotationTypes) {
+    presetCode += `,\n${indent2}annotationTypes: {\n`;
+    presetCode += `${indent3}rows: ${settings.annotationTypes.rows !== false ? 'true' : 'false'},\n`;
+    presetCode += `${indent3}columns: ${settings.annotationTypes.columns !== false ? 'true' : 'false'},\n`;
+    presetCode += `${indent3}groups: ${settings.annotationTypes.groups !== false ? 'true' : 'false'}\n`;
+    presetCode += `${indent2}}`;
+  }
+  
+  presetCode += `\n${indent}}`;
+  
+  return presetCode;
+}
+
 // Функция для получения всех доступных свойств вариантов
 function getVariantProperties(componentSet) {
   const variants = componentSet.children.filter(child => child.type === 'COMPONENT');
@@ -2039,6 +2114,40 @@ figma.ui.onmessage = (msg) => {
       settings.propertyNamesVisibility,
       settings.annotationTypes
     );
+  }
+  
+  if (msg.type === 'copy-preset') {
+    const componentName = msg.componentName;
+    const settings = msg.settings;
+    
+    if (!componentName || !settings) {
+      figma.notify('Ошибка: не удалось получить настройки для копирования');
+      return;
+    }
+    
+    try {
+      const presetCode = formatSettingsAsPreset(componentName, settings);
+      
+      // Создаем полный код для вставки в presets.js
+      const fullPresetCode = `// Добавить в секцию components объекта componentPresets:\n${presetCode},`;
+      
+      // Показываем готовый код в консоли для разработчика
+      console.log('Пресет для компонента "' + componentName + '":');
+      console.log(fullPresetCode);
+      
+      figma.notify(`Пресет для "${componentName}" скопирован в буфер обмена`);
+      
+      // Отправляем код обратно в UI для копирования в буфер обмена
+      figma.ui.postMessage({
+        type: 'preset-copied',
+        presetCode: fullPresetCode,
+        componentName: componentName
+      });
+      
+    } catch (error) {
+      console.error('Ошибка при форматировании пресета:', error);
+      figma.notify('Ошибка при создании пресета: ' + error.message);
+    }
   }
   
   if (msg.type === 'cancel') {
