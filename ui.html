@@ -866,20 +866,64 @@
       window.pendingSortingOrder = settings.sortingOrder || null;
       window.pendingPropertyNamesVisibility = settings.propertyNamesVisibility || null;
       window.pendingAnnotationTypes = settings.annotationTypes || null;
-      const customSortingCheckbox = document.getElementById('use-custom-sorting-checkbox');
-      if (settings.sortingOrder && Object.keys(settings.sortingOrder).length > 0) {
-        customSortingCheckbox.checked = true;
-        document.getElementById('sorting-order-section').style.display = 'block';
-      } else {
-        customSortingCheckbox.checked = false;
-        document.getElementById('sorting-order-section').style.display = 'none';
-      }
       
       // Загружаем настройки типов аннотаций
       if (settings.annotationTypes) {
         document.getElementById('annotation-rows-checkbox').checked = settings.annotationTypes.rows !== false;
         document.getElementById('annotation-columns-checkbox').checked = settings.annotationTypes.columns !== false;
         document.getElementById('annotation-groups-checkbox').checked = settings.annotationTypes.groups !== false;
+      }
+      
+      // Сбрасываем выбранные свойства групп
+      const groupCheckboxes = document.querySelectorAll('#group-properties-list input[type="checkbox"]');
+      groupCheckboxes.forEach(checkbox => {
+        checkbox.checked = false;
+      });
+      
+      // Восстанавливаем выбранные свойства групп из настроек
+      if (settings.groupProperties && settings.groupProperties.length > 0) {
+        settings.groupProperties.forEach(property => {
+          const checkbox = document.getElementById(`group-prop-${property}`);
+          if (checkbox) {
+            checkbox.checked = true;
+          }
+        });
+        updateGroupInfo();
+      }
+      
+      // Восстанавливаем свойство для колонок
+      const columnPropertySelect = document.getElementById('column-property-select');
+      if (columnPropertySelect) {
+        columnPropertySelect.value = settings.columnProperty || 'none';
+      }
+      
+      // Восстанавливаем настройки кастомной сортировки
+      const customSortingCheckbox = document.getElementById('use-custom-sorting-checkbox');
+      if (customSortingCheckbox) {
+        if (settings.sortingOrder && Object.keys(settings.sortingOrder).length > 0) {
+          customSortingCheckbox.checked = true;
+          document.getElementById('sorting-order-section').style.display = 'block';
+          // Обновляем UI сортировки с задержкой, чтобы DOM успел обновиться
+          setTimeout(() => {
+            updateSortingOrderUI(settings.sortingOrder);
+          }, 100);
+        } else {
+          customSortingCheckbox.checked = false;
+          document.getElementById('sorting-order-section').style.display = 'none';
+          updateSortingOrderUI({});
+        }
+      }
+      
+      // Восстанавливаем настройки видимости названий свойств
+      if (settings.propertyNamesVisibility) {
+        setTimeout(() => {
+          Object.keys(settings.propertyNamesVisibility).forEach(property => {
+            const checkbox = document.getElementById(`show-name-${property}`);
+            if (checkbox) {
+              checkbox.checked = settings.propertyNamesVisibility[property];
+            }
+          });
+        }, 200);
       }
     }
 
